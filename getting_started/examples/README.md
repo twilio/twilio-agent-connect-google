@@ -1,10 +1,12 @@
 # Examples
 
-Connect Twilio to agents deployed on GCP Agent Platform Runtime.
+Connect Twilio to GCP agents:
+- **Agent Platform Runtime** - Custom agents (LangChain, LangGraph, ADK)
+- **Dialogflow CX** - Playbook-based conversational agents
 
 ---
 
-## Quick Start
+## Agent Platform Runtime Example
 
 ### 1. Deploy Agent to GCP
 
@@ -20,8 +22,12 @@ Save the agent ID from the output.
 Create `.env` file:
 
 ```bash
+# GCP
 GOOGLE_CLOUD_PROJECT=your-project-id
+GOOGLE_CLOUD_LOCATION=us-central1
 GCP_REASONING_ENGINE_ID=your-agent-id
+
+# Twilio
 TWILIO_ACCOUNT_SID=your_account_sid
 TWILIO_AUTH_TOKEN=your_auth_token
 TWILIO_API_KEY=your_api_key
@@ -56,10 +62,42 @@ ngrok http 8000
 
 ---
 
+## Dialogflow CX Example
+
+### 1. Create Dialogflow CX Agent
+
+1. Go to [Dialogflow CX Console](https://dialogflow.cloud.google.com/cx/)
+2. Create an agent with playbooks
+3. Get agent ID from URL
+
+### 2. Configure Environment
+
+Add to `.env`:
+
+```bash
+DIALOGFLOW_CX_AGENT_ID=your-agent-uuid
+```
+
+### 3. Run Server
+
+```bash
+python dialogflow_cx_playbook.py
+```
+
+### 4. Expose & Configure
+
+Same as Agent Platform Runtime (steps 5-6 above)
+
+---
+
 ## Architecture
 
 ```
-Twilio → TAC Server (Local) → Agent (GCP)
+Twilio → TAC Server (Local) → GCP Agent
+                               ↓
+                        Agent Platform Runtime
+                               or
+                        Dialogflow CX
 ```
 
-The TAC server runs locally and connects to your deployed GCP agent.
+The TAC server runs locally and connects to your GCP agent.

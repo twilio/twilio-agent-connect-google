@@ -36,7 +36,7 @@ import os
 
 import vertexai
 from dotenv import load_dotenv
-from vertexai.preview import reasoning_engines
+from vertexai import agent_engines
 
 from tac import TAC, TACConfig
 from tac.server import TACFastAPIServer
@@ -50,7 +50,7 @@ REASONING_ENGINE_ID = os.environ["GCP_REASONING_ENGINE_ID"]
 
 vertexai.init(project=GCP_PROJECT, location=GCP_LOCATION)
 tac = TAC(config=TACConfig.from_env())
-agent = reasoning_engines.ReasoningEngine(REASONING_ENGINE_ID)
+agent = agent_engines.get(REASONING_ENGINE_ID)
 
 connector = AgentPlatformRuntimeConnector(tac=tac, agent=agent)
 

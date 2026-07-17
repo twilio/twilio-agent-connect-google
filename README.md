@@ -99,126 +99,23 @@ GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account-key.json  # Optional
 GCP_REASONING_ENGINE_ID=your-reasoning-engine-id
 ```
 
-### 3. Deploy Agent to GCP (One-time Setup)
+### 3. Deploy to GCP
 
-First, deploy your agent to GCP Agent Platform Runtime. See
-[`deploy/agent_platform/agents/README.md`](deploy/agent_platform/agents/README.md)
-for all supported deployment methods (custom Python, LangChain, ADK).
-
-**Quick deploy with Gemini 3.5 Flash:**
+Deploy the agent and the TAC server with a few `make` commands:
 
 ```bash
-# 1. Setup environment
-cd deploy/agent_platform/agents/custom
-cp .env.example .env
-# Edit .env with your GOOGLE_CLOUD_PROJECT
-
-# 2. Authenticate
+cd deploy/agent_platform
+cp .env.example .env         # fill in project, region, Twilio credentials
+gcloud auth login
 gcloud auth application-default login
-
-# 3. Deploy
-python deploy_custom.py
-
-# 4. Save returned agent ID to .env
-# GCP_REASONING_ENGINE_ID=your-agent-id
+make deploy-all              # deploy agent + secrets + server; prints webhook URLs
 ```
 
-**Or deploy custom agent:**
+Then set your Twilio number's Voice webhook to the printed `/twiml` URL and the
+Conversation Orchestrator status callback to the `/webhook` URL.
 
-```python
-from google import genai
-import vertexai
-from vertexai.preview import reasoning_engines
-
-class MyAgent:
-    def __init__(self, project: str):
-        self.project = project
-    
-    def query(self, **kwargs):
-        input_text = kwargs.get("input", "")
-        
-        # Use Gemini 3.5 Flash (Enterprise API)
-        client = genai.Client(
-            enterprise=True,
-            project=self.project,
-            location="global"
-        )
-        
-        response = client.models.generate_content(
-            model="gemini-3.5-flash",
-            contents=input_text
-        )
-        
-        return {"output": response.text}
-
-# Deploy
-vertexai.init(project="your-project", location="us-central1")
-deployed = reasoning_engines.ReasoningEngine.create(
-    MyAgent(project="your-project"),
-    requirements=["google-genai>=2.0.0"],
-    display_name="my-agent",
-    sys_version="3.11"
-)
-
-print(f"Agent ID: {deployed.resource_name.split('/')[-1]}")
-```
-
-### 4. Connect to Twilio
-
-```python
-# server.py
-import os
-import vertexai
-from vertexai.preview import reasoning_engines
-from tac import TAC, TACConfig
-from tac.server import TACFastAPIServer
-from tac_google.connectors import AgentPlatformRuntimeConnector
-
-# Initialize Vertex AI
-vertexai.init(
-    project=os.getenv("GOOGLE_CLOUD_PROJECT"),
-    location=os.getenv("GOOGLE_CLOUD_LOCATION")
-)
-
-# Initialize TAC
-tac = TAC(config=TACConfig.from_env())
-
-# Agent factory - returns deployed reasoning engine
-def get_agent(context):
-    return reasoning_engines.ReasoningEngine(
-        os.getenv("GCP_REASONING_ENGINE_ID")
-    )
-
-# Create connector
-connector = AgentPlatformRuntimeConnector(
-    tac=tac,
-    agent_factory=get_agent
-)
-
-# Start server
-server = TACFastAPIServer(
-    tac=tac,
-    voice_channel=connector.voice,
-    sms_channel=connector.sms
-)
-
-server.start()
-```
-
-### 5. Run and Test
-
-```bash
-# Start the server
-python server.py
-
-# In another terminal, expose with ngrok
-ngrok http 8000
-
-# Update TWILIO_VOICE_PUBLIC_DOMAIN in .env with your ngrok URL
-# Configure Twilio phone number webhook URLs:
-#   Voice: https://your-domain.ngrok.io/voice
-#   SMS: https://your-domain.ngrok.io/sms
-```
+See [`deploy/agent_platform/README.md`](deploy/agent_platform/README.md) for the
+full guide (agent methods, architecture, logs).
 
 ---
 
@@ -280,24 +177,6 @@ vertexai.init(
 Full examples available in [`getting_started/examples/`](getting_started/examples/):
 
 - **`agent_platform_runtime.py`** - Deploy custom agents (LangChain, ADK) to GCP Runtime
-
-### Advanced: Context-Aware Agent Routing
-
-Route to different agents based on channel or other context:
-
-```python
-def get_agent_by_channel(context):
-    """Route to different agents based on channel."""
-    if context.channel == "voice":
-        return reasoning_engines.ReasoningEngine("voice-agent-id")
-    else:
-        return reasoning_engines.ReasoningEngine("sms-agent-id")
-
-connector = AgentPlatformRuntimeConnector(
-    tac=tac,
-    agent_factory=get_agent_by_channel
-)
-```
 
 ---
 

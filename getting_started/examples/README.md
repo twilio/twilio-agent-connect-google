@@ -7,14 +7,11 @@ Connect Twilio to GCP agents:
 
 ## Agent Platform Runtime Example
 
-### 1. Deploy Agent to GCP
+### 1. Deploy an Agent to GCP
 
-```bash
-cd ../../deploy/agent_platform/agents/custom
-python deploy_custom.py
-```
-
-Save the agent ID from the output.
+Deploy an agent to Agent Platform Runtime — see
+[`deploy/agent_platform/README.md`](../../deploy/agent_platform/README.md)
+(`make deploy-agent`). Save the printed agent ID for the `.env` below.
 
 ### 2. Configure Environment
 
@@ -56,8 +53,8 @@ ngrok http 8000
 
 ### 6. Configure Twilio Webhooks
 
-- Voice: `https://your-domain.ngrok.io/voice`
-- SMS: `https://your-domain.ngrok.io/sms`
+- Voice (phone number "A call comes in"): `https://your-domain.ngrok.io/twiml`
+- SMS (Conversation Orchestrator status callback): `https://your-domain.ngrok.io/webhook`
 
 ---
 

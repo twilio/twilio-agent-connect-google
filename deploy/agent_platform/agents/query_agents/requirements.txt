@@ -1,5 +1,6 @@
 # Local dependencies needed to build and deploy the LangchainAgent.
 # (The remote requirements installed on Agent Platform Runtime itself are
-# passed via the `requirements=[...]` argument in deploy_langchain.py.)
+# passed via the `requirements=[...]` argument in deploy.py.)
 google-cloud-aiplatform[reasoningengine,langchain]>=1.70.0
+langchain-google-genai>=2.0.0
 python-dotenv>=1.0.0

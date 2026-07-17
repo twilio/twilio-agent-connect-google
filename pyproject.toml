@@ -33,7 +33,6 @@ server = [
 # Vertex AI connector (Gemini models)
 vertex-ai = [
     "google-cloud-aiplatform[reasoningengine,agent-engines]>=1.148.1,<2",
-    "vertexai>=1.148.1",
     "google-genai>=2.9,<3",
 ]
 
@@ -41,7 +40,6 @@ vertex-ai = [
 dev = [
     # Google Cloud SDK dependencies
     "google-cloud-aiplatform[agent-engines]>=1.148.1,<2",
-    "vertexai>=1.148.1",
     "google-genai>=2.9,<3",
     "google-adk[a2a]>=2.2.0,<2.3",
     # Server dependencies (via TAC core)

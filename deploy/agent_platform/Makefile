@@ -7,7 +7,7 @@ AGENT ?= adk
 
 help:
 	@echo "TAC Agent Platform deploy targets:"
-	@echo "  make create-sa                 - create the dedicated deploy service account and set it in .env"
+	@echo "  make create-sa                 - create the dedicated deploy service account (tac-deployer)"
 	@echo "  make deploy-agent [AGENT=...]  - deploy an agent (AGENT=adk|custom|query_agents; default: adk)"
 	@echo "  make deploy-secret             - store the Twilio credentials in Secret Manager"
 	@echo "  make deploy-server             - build + deploy the TAC server to Cloud Run"

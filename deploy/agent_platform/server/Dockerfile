@@ -16,6 +16,10 @@ RUN pip install --no-cache-dir ".[vertex-ai,server]"
 # The server entrypoint (lives in this folder).
 COPY deploy/agent_platform/server/main.py ./main.py
 
+# Run as a non-root user (defense-in-depth for a public-facing service).
+RUN useradd --create-home --uid 10001 appuser && chown -R appuser /app
+USER appuser
+
 # Bind all interfaces (Cloud Run requirement). The app reads TWILIO_SERVER_HOST.
 ENV TWILIO_SERVER_HOST=0.0.0.0
 

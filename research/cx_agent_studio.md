@@ -33,8 +33,8 @@ text-to-speech on Twilio's side — so the connector exchanges **text** with the
 agent and invokes CX Agent Studio over the **text `runSession`** API. Users still
 deploy a **Cloud Run** server (the TAC server) on GCP to run it.
 
-- Connector: [`cx_agent_studio_connector.py`](https://github.com/twilio/twilio-agent-connect-google/blob/main/src/tac_google/connectors/cx_agent_studio_connector.py)
-- Deploy: [`deploy/cx_agent_studio/`](https://github.com/twilio/twilio-agent-connect-google/tree/main/deploy/cx_agent_studio) (agent built in console + TAC server on Cloud Run)
+- Connector: [`cx_agent_studio_connector.py`](https://github.com/twilio/twilio-agent-connect-google/blob/gemini-enterprise-cx/src/tac_google/connectors/cx_agent_studio_connector.py)
+- Deploy: [`deploy/cx_agent_studio/`](https://github.com/twilio/twilio-agent-connect-google/tree/gemini-enterprise-cx/deploy/cx_agent_studio) (agent built in console + TAC server on Cloud Run)
 - Verified live: SMS and Voice, including multi-turn memory (CES keeps history by
   session id).
 

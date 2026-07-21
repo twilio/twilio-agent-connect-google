@@ -67,7 +67,7 @@ graph TB
 
 ## Deployment Components
 
-- **Agent** - hosted on Agent Platform Runtime; deployed from [`agents/`](./agents/) (custom / query_agents / adk)
+- **Agent** - hosted on Agent Platform Runtime; deployed from [`agents/`](./agents/) (custom / query_agents / adk), or built in the console with [Agent Studio](./agents/studio)
 - **Cloud Run Service** - the TAC server (FastAPI), HTTP webhooks and WebSocket endpoints; deployed from [`server/`](./server/)
 - **Artifact Registry** - holds the server's container image (created automatically)
 - **Secret Manager** - holds the Twilio credentials, read by the Cloud Run service
@@ -168,6 +168,10 @@ then `deploy-secret`, then `deploy-server`. Choose the agent framework with `AGE
 | `query_agents` | LangChain (also LangGraph / AG2) |
 
 Or run the steps individually: `make deploy-agent` / `make deploy-secret` / `make deploy-server`.
+
+Agents built with [Agent Studio](./agents/studio) are created and deployed from
+the console (no `make` target); set the resulting agent ID in `.env` and deploy
+the server the same way.
 
 **Deployment output:**
 

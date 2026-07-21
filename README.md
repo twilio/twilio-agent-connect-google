@@ -1,6 +1,6 @@
 <div align="center">
   <div>
-    <img src="logo.svg" alt="Twilio Agent Connect Google Logo" width="120" height="120">
+    <img src="https://raw.githubusercontent.com/twilio/twilio-agent-connect-google/main/logo.svg" alt="Twilio Agent Connect Google Logo" width="120" height="120">
   </div>
 
   <h1>

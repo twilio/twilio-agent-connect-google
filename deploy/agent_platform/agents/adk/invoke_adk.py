@@ -43,24 +43,18 @@ def main():
     user_id = "local-test-user"
     session_id = agent.create_session(user_id=user_id)["id"]
 
-    print("Agent ready - type 'quit' to exit.\n")
-    while True:
-        try:
+    print("Agent ready - press Ctrl+C to exit.\n")
+    try:
+        while True:
             user_input = input("You: ").strip()
             if not user_input:
                 continue
-            if user_input.lower() in ["quit", "exit", "q"]:
-                print("\nGoodbye!")
-                break
             events = list(
                 agent.stream_query(message=user_input, user_id=user_id, session_id=session_id)
             )
             print(f"Agent: {extract_final_text(events) or '(no text response)'}\n")
-        except KeyboardInterrupt:
-            print("\n\nGoodbye!")
-            break
-        except Exception as e:
-            print(f"\n❌ Error: {e}\n")
+    except KeyboardInterrupt:
+        print()
 
 
 if __name__ == "__main__":

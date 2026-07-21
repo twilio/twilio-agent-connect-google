@@ -21,8 +21,6 @@ PROJECT="${GOOGLE_CLOUD_PROJECT:?GOOGLE_CLOUD_PROJECT must be set in .env}"
 REGION="${GOOGLE_CLOUD_LOCATION:?GOOGLE_CLOUD_LOCATION must be set in .env}"
 DISPLAY_NAME="tac-agent"
 
-gcloud services enable aiplatform.googleapis.com --project "$PROJECT" --quiet
-
 echo "==> Deploying ADK agent (3-5 minutes)..."
 output="$(adk deploy agent_engine \
     --project="$PROJECT" \

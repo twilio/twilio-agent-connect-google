@@ -5,12 +5,12 @@ new agent and prints the ID; with one set it updates that agent.
 """
 
 import os
-import subprocess
 
 import vertexai
 from dotenv import find_dotenv, load_dotenv, set_key
 from google import genai
-from vertexai.preview import reasoning_engines
+from google.cloud import storage
+from vertexai import agent_engines
 
 load_dotenv()
 
@@ -40,29 +40,21 @@ def main():
         print("❌ Error: GOOGLE_CLOUD_PROJECT not set")
         return
 
-    subprocess.run(
-        ["gcloud", "services", "enable", "aiplatform.googleapis.com", "--project", project],
-        check=True,
-    )
+    bucket_name = f"{project}-reasoning-engine-staging"
+    storage_client = storage.Client(project=project)
+    if not storage_client.bucket(bucket_name).exists():
+        print(f"Creating staging bucket: gs://{bucket_name}")
+        storage_client.create_bucket(bucket_name, location=location)
 
-    staging_bucket = f"gs://{project}-reasoning-engine-staging"
-    result = subprocess.run(["gsutil", "ls", "-b", staging_bucket], capture_output=True)
-    if result.returncode != 0:
-        print(f"Creating staging bucket: {staging_bucket}")
-        subprocess.run(["gsutil", "mb", "-l", location, staging_bucket], check=True)
-
-    vertexai.init(project=project, location=location, staging_bucket=staging_bucket)
+    vertexai.init(project=project, location=location, staging_bucket=f"gs://{bucket_name}")
 
     agent = SimpleAgent(project=project)
-    requirements = ["google-genai>=2.0.0", "google-cloud-aiplatform>=1.70.0"]
+    requirements = os.path.join(os.path.dirname(os.path.abspath(__file__)), "requirements.txt")
 
     if agent_id:
         print(f"\nUpdating agent {agent_id} (3-5 minutes)...")
         try:
-            existing_agent = reasoning_engines.ReasoningEngine(agent_id)
-            existing_agent.update(
-                reasoning_engine=agent, requirements=requirements, sys_version="3.11"
-            )
+            agent_engines.get(agent_id).update(agent_engine=agent, requirements=requirements)
             print(f"\n✅ Updated! Agent ID: {agent_id}")
             print("Test with: python invoke.py")
         except Exception as e:
@@ -70,8 +62,8 @@ def main():
             print("Agent ID may be invalid. Remove GCP_REASONING_ENGINE_ID from .env to create a new agent.")
     else:
         print("\nDeploying new agent (3-5 minutes)...")
-        deployed = reasoning_engines.ReasoningEngine.create(
-            agent, requirements=requirements, display_name="simple-gemini-agent", sys_version="3.11"
+        deployed = agent_engines.create(
+            agent, requirements=requirements, display_name="simple-gemini-agent"
         )
         agent_id = deployed.resource_name.split("/")[-1]
         env_path = find_dotenv()

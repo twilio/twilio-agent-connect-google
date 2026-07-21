@@ -12,7 +12,7 @@ import os
 
 import vertexai
 from dotenv import load_dotenv
-from vertexai.preview import reasoning_engines
+from vertexai import agent_engines
 
 load_dotenv()
 
@@ -40,31 +40,18 @@ def main():
     print(f"  Agent ID: {agent_id}\n")
 
     vertexai.init(project=project, location=location)
-    agent = reasoning_engines.ReasoningEngine(agent_id)
+    agent = agent_engines.get(agent_id)
 
-    print("Agent ready - type 'quit' to exit.\n")
-
-    while True:
-        try:
+    print("Agent ready - press Ctrl+C to exit.\n")
+    try:
+        while True:
             user_input = input("You: ").strip()
-
             if not user_input:
                 continue
-
-            if user_input.lower() in ["quit", "exit", "q"]:
-                print("\nGoodbye!")
-                break
-
-            print("Agent: ", end="", flush=True)
             response = agent.query(input=user_input)
-            print(response["output"])
-            print()
-
-        except KeyboardInterrupt:
-            print("\n\nGoodbye!")
-            break
-        except Exception as e:
-            print(f"\n❌ Error: {e}\n")
+            print(f"Agent: {response['output']}\n")
+    except KeyboardInterrupt:
+        print()
 
 
 if __name__ == "__main__":

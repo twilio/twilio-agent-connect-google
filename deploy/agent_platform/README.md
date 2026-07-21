@@ -82,7 +82,7 @@ graph TB
 ### GCP Account Requirements
 
 - **Active GCP Project** with billing enabled and access to:
-  - **Vertex AI** (Agent Platform Runtime)
+  - **Vertex AI** (Agent Platform Runtime) — enable it before deploying an agent: `gcloud services enable aiplatform.googleapis.com`
   - **Cloud Run**, **Cloud Build**, and **Artifact Registry** (enabled automatically by `server/deploy.sh`)
 - **Gemini 3.5 Flash** enabled in [Model Garden](https://console.cloud.google.com/vertex-ai/model-garden) (used by the `custom/` and `query_agents/` examples; it uses the Enterprise Agent Platform API)
 - **Region:** any region with Vertex AI and Cloud Run availability — set it via `GOOGLE_CLOUD_LOCATION` in `.env`

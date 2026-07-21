@@ -26,7 +26,7 @@
   </p>
 </div>
 
-Google Cloud-specific connectors for [Twilio Agent Connect (TAC)](https://github.com/twilio/twilio-agent-connect-python), enabling seamless integration with Google Cloud agent services like Agent Platform Runtime (Reasoning Engine), Dialogflow CX, and the Agent Development Kit (ADK).
+Google Cloud-specific connectors for [Twilio Agent Connect (TAC)](https://github.com/twilio/twilio-agent-connect-python), enabling seamless integration with Google Cloud agent services like Agent Platform Runtime (Reasoning Engine), CX Agent Studio (Customer Engagement Suite), and the Agent Development Kit (ADK).
 
 ---
 
@@ -36,7 +36,7 @@ Google Cloud-specific connectors for [Twilio Agent Connect (TAC)](https://github
 - **GCP Agent Platform Runtime** (Reasoning Engine) via `AgentPlatformRuntimeConnector` — connect an agent built with any framework; the connector auto-detects its invocation shape:
   - **Custom Python / LangChain / LangGraph / AG2** — single synchronous `query()` call
   - **Google ADK** — session-based, streaming `stream_query()`
-- **Dialogflow CX** (coming soon) — UI-configured conversational flows
+- **CX Agent Studio** (Customer Engagement Suite) via `CXAgentStudioConnector` — connect an agent built in the CX Agent Studio console; invoked over the CES text `runSession` API
 
 ### Multi-Channel Communication
 - **Voice and SMS support** - Single codebase handles both phone calls and text messages
@@ -58,6 +58,12 @@ Google Cloud-specific connectors for [Twilio Agent Connect (TAC)](https://github
 
 ```bash
 pip install twilio-agent-connect-google[vertex-ai,server]
+```
+
+### With CX Agent Studio
+
+```bash
+pip install twilio-agent-connect-google[cx-agent-studio,server]
 ```
 
 ### Development
@@ -98,6 +104,7 @@ TWILIO_VOICE_PUBLIC_DOMAIN=your-domain.ngrok.io
 Full examples available in [`getting_started/examples/`](getting_started/examples/):
 
 - **`agent_platform_runtime.py`** - Connect Twilio to an agent deployed on GCP Agent Platform Runtime (custom Python, LangChain, or ADK)
+- **`cx_agent_studio.py`** - Connect Twilio to an agent built in CX Agent Studio (Customer Engagement Suite)
 
 ## Deployment
 
@@ -109,6 +116,11 @@ See [`deploy/README.md`](deploy/README.md) for production deployment guides:
 - Twilio credentials stored in Secret Manager
 - One shared `.env` and a `make` workflow (`create-sa`, `deploy-agent`, `deploy-secret`, `deploy-server`, `deploy-all`)
 - See [`deploy/agent_platform/`](deploy/agent_platform/) for the setup guide
+
+### Cloud Run (CX Agent Studio)
+- Build the **agent** in the CX Agent Studio console; deploy the **TAC server** to Cloud Run
+- Same Cloud Run + Secret Manager + `make` workflow, invoking the CES `runSession` API
+- See [`deploy/cx_agent_studio/`](deploy/cx_agent_studio/) for the setup guide
 
 ## Development
 
@@ -152,6 +164,7 @@ twilio-agent-connect-google depends on:
   - Requires the `[server]` extra for TAC Server support
 - **google-cloud-aiplatform** - Vertex AI / Agent Platform Runtime (Reasoning Engine)
 - **google-adk** (optional) - Google Agent Development Kit, for ADK agents
+- **google-auth** - used by the CX Agent Studio connector to call the CES API (via the `cx-agent-studio` extra)
 
 ## Contributing
 

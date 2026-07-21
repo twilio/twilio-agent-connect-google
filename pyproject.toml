@@ -37,6 +37,13 @@ vertex-ai = [
     "google-auth>=2,<3",
 ]
 
+# CX Agent Studio connector (Customer Engagement Suite REST API).
+# Lightweight: just auth + HTTP, no Vertex AI SDK.
+cx-agent-studio = [
+    "google-auth>=2,<3",
+    "requests>=2,<3",
+]
+
 # Development dependencies (includes all runtime features and Google Cloud SDKs)
 dev = [
     # Google Cloud SDK dependencies

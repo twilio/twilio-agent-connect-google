@@ -34,6 +34,7 @@ server = [
 vertex-ai = [
     "google-cloud-aiplatform[reasoningengine,agent-engines]>=1.148.1,<2",
     "google-genai>=2.9,<3",
+    "google-auth>=2,<3",
 ]
 
 # Development dependencies (includes all runtime features and Google Cloud SDKs)

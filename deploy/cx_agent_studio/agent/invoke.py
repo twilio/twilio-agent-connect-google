@@ -16,6 +16,7 @@ from google.auth.transport.requests import AuthorizedSession
 load_dotenv()
 
 CES_HOST = "ces.googleapis.com"
+_TIMEOUT_S = 30
 
 
 def extract_text(data: dict) -> str:
@@ -51,6 +52,7 @@ def main():
             response = client.post(
                 f"https://{CES_HOST}/v1/{session}:runSession",
                 json={"config": {"session": session}, "inputs": [{"text": user_input}]},
+                timeout=_TIMEOUT_S,
             )
             response.raise_for_status()
             print(f"Agent: {extract_text(response.json()) or '(no text response)'}\n")

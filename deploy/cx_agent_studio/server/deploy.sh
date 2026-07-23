@@ -47,6 +47,9 @@ while IFS= read -r line || [ -n "$line" ]; do
     esac
     case " $SECRET_ENV_KEYS " in *" $key "*) continue ;; esac
     val="${val%\"}"; val="${val#\"}"
+    # Escape backslashes and double quotes so values containing them still
+    # produce valid YAML.
+    val="${val//\\/\\\\}"; val="${val//\"/\\\"}"
     printf '%s: "%s"\n' "$key" "$val" >> "$ENV_YAML"
 done < "$ENV_FILE"
 

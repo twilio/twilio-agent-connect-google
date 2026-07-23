@@ -67,10 +67,9 @@ class CXAgentStudioConnector:
         self.tac = tac
         self.agent_id = agent_id.rstrip("/")
 
-        creds, _ = google.auth.default(
+        self._creds, _ = google.auth.default(
             scopes=["https://www.googleapis.com/auth/cloud-platform"]
         )
-        self._session = AuthorizedSession(creds)
         self._started: set[str] = set()
 
         self.voice = VoiceChannel(tac=tac, config=voice_config)
@@ -117,12 +116,14 @@ class CXAgentStudioConnector:
         payload = {"config": {"session": session}, "inputs": [{"text": message}]}
 
         def call() -> dict[str, Any]:
-            response = self._session.post(url, json=payload, timeout=_RUN_SESSION_TIMEOUT_S)
-            response.raise_for_status()
-            return response.json()
+            # A fresh AuthorizedSession per call: requests.Session isn't
+            # guaranteed thread-safe, and this runs in a thread pool.
+            with AuthorizedSession(self._creds) as http:
+                response = http.post(url, json=payload, timeout=_RUN_SESSION_TIMEOUT_S)
+                response.raise_for_status()
+                return response.json()
 
-        loop = asyncio.get_event_loop()
-        data = await loop.run_in_executor(None, call)
+        data = await asyncio.to_thread(call)
         return self._parse_response(data)
 
     def _parse_response(self, data: dict[str, Any]) -> str:

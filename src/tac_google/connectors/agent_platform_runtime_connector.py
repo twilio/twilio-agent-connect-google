@@ -3,7 +3,11 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from typing import TYPE_CHECKING, Any
+
+import google.auth
+from google.auth.transport.requests import AuthorizedSession
 
 from tac.adapters import MemoryPromptBuilder
 from tac.channels.sms import SMSChannel, SMSChannelConfig
@@ -28,7 +32,7 @@ class AgentPlatformRuntimeConnector:
     Reasoning Engine or Agent Engine). Supports agents built with LangChain, LangGraph,
     AG2, custom Python code, or ADK that have been deployed to GCP infrastructure.
 
-    The deployed agent exposes one of two invocation shapes, detected automatically
+    The deployed agent exposes one of three invocation shapes, detected automatically
     from which methods are registered on it at construction time:
     - `query()` family (LangChain, LangGraph, AG2, custom classes): a single
       synchronous call per message. Conversation history is formatted as text
@@ -36,6 +40,11 @@ class AgentPlatformRuntimeConnector:
     - ADK (`stream_query()`): session-based and streaming. A remote session is
       created once per conversation and reused; ADK manages history server-side,
       so no local history text is built for this path.
+    - Agent Studio (neither method): a source-code app deployed from the Studio
+      UI. The SDK registers no class methods for it, so it is invoked through the
+      reasoningEngines:streamQuery REST endpoint. Like the query() family it is
+      stateless per call, so conversation history is formatted as text and sent
+      on every message.
 
     Manages Voice and SMS channels and injects TAC memory on the first message
     of each conversation (as a system-message prefix for the query() family, or
@@ -99,23 +108,41 @@ class AgentPlatformRuntimeConnector:
     ) -> None:
         self.tac = tac
         self.agent = agent
-        # ADK-deployed agents only register stream_query() (session-based,
-        # streaming). LangChain/LangGraph/AG2/custom classes register query()
-        # (single synchronous call). Detected once here since the deployed
-        # agent's dynamic methods are already bound by the time it's passed in.
+        # Detect the invocation shape once, from which methods the deployed
+        # agent has bound by the time it's passed in:
+        # - query() only            -> LangChain/LangGraph/AG2/custom classes
+        # - stream_query() only     -> ADK (session-based, streaming)
+        # - neither                 -> Agent Studio source-code app; the SDK
+        #   registers no class methods for it, so it is invoked through the
+        #   reasoningEngines:streamQuery REST endpoint instead.
         self.is_streaming_agent = hasattr(agent, "stream_query") and not hasattr(agent, "query")
+        self.is_studio_agent = not hasattr(agent, "query") and not hasattr(agent, "stream_query")
         self.conversation_histories: dict[str, list[dict[str, str]]] = {}
         self.adk_sessions: dict[str, str] = {}
+
+        if self.is_studio_agent:
+            resource_name = agent.resource_name  # projects/P/locations/L/reasoningEngines/ID
+            location = resource_name.split("/")[3]
+            self._studio_url = (
+                f"https://{location}-aiplatform.googleapis.com/v1/{resource_name}:streamQuery"
+            )
+            creds, _ = google.auth.default(
+                scopes=["https://www.googleapis.com/auth/cloud-platform"]
+            )
+            self._studio_session = AuthorizedSession(creds)
         self.voice = VoiceChannel(tac=tac, config=voice_config)
         self.sms = SMSChannel(tac=tac, config=sms_config)
 
         self.tac.on_message_ready(self._handle_message)
         self.tac.on_conversation_ended(self._handle_conversation_ended)
 
-        logger.debug(
-            "AgentPlatformRuntimeConnector initialized",
-            mode="stream_query" if self.is_streaming_agent else "query",
-        )
+        if self.is_studio_agent:
+            mode = "studio_rest"
+        elif self.is_streaming_agent:
+            mode = "stream_query"
+        else:
+            mode = "query"
+        logger.debug("AgentPlatformRuntimeConnector initialized", mode=mode)
 
     async def _handle_message(
         self,
@@ -124,6 +151,8 @@ class AgentPlatformRuntimeConnector:
         memory_response: TACMemoryResponse | None,
     ) -> str | None:
         try:
+            if self.is_studio_agent:
+                return await self._handle_studio_message(user_message, context, memory_response)
             if self.is_streaming_agent:
                 return await self._handle_adk_message(user_message, context, memory_response)
             return await self._handle_query_message(user_message, context, memory_response)
@@ -209,6 +238,66 @@ class AgentPlatformRuntimeConnector:
 
         events = await loop.run_in_executor(None, run_stream_query)
         return self._parse_adk_events(events)
+
+    async def _handle_studio_message(
+        self,
+        user_message: str,
+        context: ConversationSession,
+        memory_response: TACMemoryResponse | None,
+    ) -> str:
+        conv_id = context.conversation_id
+
+        if conv_id not in self.conversation_histories:
+            self.conversation_histories[conv_id] = []
+
+            if memory_response:
+                memory_context = MemoryPromptBuilder.build(memory_response, context)
+                if memory_context:
+                    self.conversation_histories[conv_id].append({
+                        "role": "system",
+                        "content": memory_context
+                    })
+
+        self.conversation_histories[conv_id].append({
+            "role": "user",
+            "content": user_message
+        })
+
+        formatted_input = self._format_history_as_text(
+            self.conversation_histories[conv_id]
+        )
+
+        loop = asyncio.get_event_loop()
+
+        def run_stream_query() -> list[dict[str, Any]]:
+            response = self._studio_session.post(
+                self._studio_url, json={"input": {"message": formatted_input}}
+            )
+            response.raise_for_status()
+            return self._parse_studio_events(response.text)
+
+        events = await loop.run_in_executor(None, run_stream_query)
+        response_text = self._parse_adk_events(events)
+
+        self.conversation_histories[conv_id].append({
+            "role": "assistant",
+            "content": response_text
+        })
+
+        return response_text
+
+    def _parse_studio_events(self, raw: str) -> list[dict[str, Any]]:
+        """Parse a streamQuery REST body (concatenated JSON events) into a list."""
+        decoder = json.JSONDecoder()
+        idx, events = 0, []
+        while idx < len(raw):
+            while idx < len(raw) and raw[idx] in " \t\r\n,[]":
+                idx += 1
+            if idx >= len(raw):
+                break
+            event, idx = decoder.raw_decode(raw, idx)
+            events.append(event)
+        return events
 
     def _format_history_as_text(self, history: list[dict[str, str]]) -> str:
         if not history:

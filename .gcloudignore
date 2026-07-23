@@ -1,0 +1,22 @@
+# Files not uploaded to Cloud Build by `gcloud builds submit`.
+# When present, this file replaces .gitignore for gcloud's upload filter, so it
+# must keep everything the Dockerfile COPYs (pyproject.toml, README.md, src/,
+# deploy/, getting_started/) while trimming bulky or sensitive paths.
+.git
+.gitignore
+
+# Local envs / secrets — never ship to the build.
+.env
+**/.env
+.venv
+venv/
+env/
+
+# Caches & tooling
+__pycache__/
+*.py[cod]
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.idea/
+.DS_Store

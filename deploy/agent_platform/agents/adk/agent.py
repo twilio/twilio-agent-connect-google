@@ -6,14 +6,10 @@ from google.genai import Client
 
 
 class GlobalGemini(Gemini):
-    """Gemini model forced to the global endpoint.
+    """Gemini pinned to the global endpoint.
 
-    gemini-3.5-flash (Enterprise Agent Platform API) is only served via the
-    global endpoint, not regional ones. The default Gemini client reads
-    location from GOOGLE_CLOUD_LOCATION, which is set to a specific region
-    (e.g. us-west1) for this deployed Reasoning Engine, so it must be
-    overridden here or the container 404s on first model call and crashes
-    before it can start serving.
+    gemini-3.5-flash is only served on the global endpoint, so the deploy
+    region must be overridden here or the container 404s on first model call.
     """
 
     @cached_property

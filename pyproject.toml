@@ -44,6 +44,13 @@ cx-agent-studio = [
     "requests>=2,<3",
 ]
 
+# Conversational Agents connector (Dialogflow CX detectIntent REST API).
+# Lightweight: just auth + HTTP, no Vertex AI SDK.
+conversational-agents = [
+    "google-auth>=2,<3",
+    "requests>=2,<3",
+]
+
 # Development dependencies (includes all runtime features and Google Cloud SDKs)
 dev = [
     # Google Cloud SDK dependencies

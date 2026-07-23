@@ -26,7 +26,7 @@
   </p>
 </div>
 
-Google Cloud-specific connectors for [Twilio Agent Connect (TAC)](https://github.com/twilio/twilio-agent-connect-python), enabling seamless integration with Google Cloud agent services like Agent Platform Runtime (Reasoning Engine), CX Agent Studio (Customer Engagement Suite), and the Agent Development Kit (ADK).
+Google Cloud-specific connectors for [Twilio Agent Connect (TAC)](https://github.com/twilio/twilio-agent-connect-python), enabling seamless integration with Google Cloud agent services like Agent Platform Runtime (Reasoning Engine), CX Agent Studio (Customer Engagement Suite), Conversational Agents (Dialogflow CX), and the Agent Development Kit (ADK).
 
 ---
 
@@ -37,6 +37,7 @@ Google Cloud-specific connectors for [Twilio Agent Connect (TAC)](https://github
   - **Custom Python / LangChain / LangGraph / AG2** — single synchronous `query()` call
   - **Google ADK** — session-based, streaming `stream_query()`
 - **CX Agent Studio** (Customer Engagement Suite) via `CXAgentStudioConnector` — connect an agent built in the CX Agent Studio console; invoked over the CES text `runSession` API
+- **Conversational Agents** (Dialogflow CX) via `ConversationalAgentsConnector` — connect an agent built in the Conversational Agents console; invoked over the Dialogflow CX `detectIntent` API (works for Playbook and Flow agents)
 
 ### Multi-Channel Communication
 - **Voice and SMS support** - Single codebase handles both phone calls and text messages
@@ -64,6 +65,12 @@ pip install twilio-agent-connect-google[vertex-ai,server]
 
 ```bash
 pip install twilio-agent-connect-google[cx-agent-studio,server]
+```
+
+### With Conversational Agents
+
+```bash
+pip install twilio-agent-connect-google[conversational-agents,server]
 ```
 
 ### Development
@@ -105,6 +112,7 @@ Full examples available in [`getting_started/examples/`](getting_started/example
 
 - **`agent_platform_runtime.py`** - Connect Twilio to an agent deployed on GCP Agent Platform Runtime (custom Python, LangChain, or ADK)
 - **`cx_agent_studio.py`** - Connect Twilio to an agent built in CX Agent Studio (Customer Engagement Suite)
+- **`conversational_agents.py`** - Connect Twilio to an agent built in Conversational Agents (Dialogflow CX)
 
 ## Deployment
 
@@ -121,6 +129,11 @@ See [`deploy/README.md`](deploy/README.md) for production deployment guides:
 - Build the **agent** in the CX Agent Studio console; deploy the **TAC server** to Cloud Run
 - Same Cloud Run + Secret Manager + `make` workflow, invoking the CES `runSession` API
 - See [`deploy/cx_agent_studio/`](deploy/cx_agent_studio/) for the setup guide
+
+### Cloud Run (Conversational Agents)
+- Build the **agent** in the Conversational Agents (Dialogflow CX) console; deploy the **TAC server** to Cloud Run
+- Same Cloud Run + Secret Manager + `make` workflow, invoking the Dialogflow CX `detectIntent` API
+- See [`deploy/conversational_agents/`](deploy/conversational_agents/) for the setup guide
 
 ## Development
 

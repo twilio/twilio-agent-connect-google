@@ -9,4 +9,6 @@ Deploy AI agents to GCP and connect them to Twilio.
   to Twilio.
 - **[CX Agent Studio](./cx_agent_studio/)** (Available Now) — connect Twilio to an
   agent built in CX Agent Studio (Customer Engagement Suite).
+- **[Conversational Agents](./conversational_agents/)** (Available Now) — connect
+  Twilio to an agent built in Conversational Agents (Dialogflow CX).
 - **App Engine** (Coming Soon)

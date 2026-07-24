@@ -34,4 +34,10 @@ def __getattr__(name: str):
     import importlib
 
     module = importlib.import_module(module_path)
-    return getattr(module, name)
+    resolved = getattr(module, name)
+    globals()[name] = resolved  # memoize: only resolved once per interpreter
+    return resolved
+
+
+def __dir__() -> list[str]:
+    return sorted(set(globals()) | set(_CONNECTOR_MODULES))

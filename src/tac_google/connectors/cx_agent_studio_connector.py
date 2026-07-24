@@ -71,6 +71,7 @@ class CXAgentStudioConnector:
             scopes=["https://www.googleapis.com/auth/cloud-platform"]
         )
         self._started: set[str] = set()
+        self._started_lock = asyncio.Lock()
 
         self.voice = VoiceChannel(tac=tac, config=voice_config)
         self.sms = SMSChannel(tac=tac, config=sms_config)
@@ -91,13 +92,17 @@ class CXAgentStudioConnector:
             message = user_message
 
             # Inject TAC memory once, on the first message of the conversation.
-            # CES keeps the rest of the history server-side by session.
-            if conv_id not in self._started:
+            # CES keeps the rest of the history server-side by session. The
+            # lock guards the check-and-add against concurrent first turns for
+            # the same conversation (e.g. overlapping webhook deliveries).
+            async with self._started_lock:
+                is_first_turn = conv_id not in self._started
                 self._started.add(conv_id)
-                if memory_response:
-                    memory_context = MemoryPromptBuilder.build(memory_response, context)
-                    if memory_context:
-                        message = f"{memory_context}\n\n{user_message}"
+
+            if is_first_turn and memory_response:
+                memory_context = MemoryPromptBuilder.build(memory_response, context)
+                if memory_context:
+                    message = f"{memory_context}\n\n{user_message}"
 
             session = f"{self.agent_id}/sessions/{conv_id}"
             return await self._run_session(session, message)

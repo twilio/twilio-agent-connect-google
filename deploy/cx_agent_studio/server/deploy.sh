@@ -100,7 +100,9 @@ echo "==> Building image..."
 
 # --- Deploy ----------------------------------------------------------------
 # timeout + no-cpu-throttling keep long-lived WebSocket calls alive;
-# min/max-instances 1 because the connector keeps conversation state in memory.
+# min/max-instances 1 because VoiceChannel's default ThreadSafeSessionManager
+# tracks in-flight tasks (e.g. voice barge-in) in process memory — CES itself
+# holds conversation history server-side by session id.
 echo "==> Deploying service..."
 gcloud run deploy "$SERVICE" \
     --project "$PROJECT" \

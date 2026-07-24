@@ -67,9 +67,14 @@ class CXAgentStudioConnector:
         self.tac = tac
         self.agent_id = agent_id.rstrip("/")
 
-        self._creds, _ = google.auth.default(
+        creds, _ = google.auth.default(
             scopes=["https://www.googleapis.com/auth/cloud-platform"]
         )
+        # Shared across calls for connection pooling. AuthorizedSession/Credentials
+        # refresh isn't strictly guarded against concurrent refresh, but the
+        # window is narrow (tokens live ~1h) and a resulting 401 is
+        # auto-retried with a fresh refresh by AuthorizedSession itself.
+        self._session = AuthorizedSession(creds)
 
         self.voice = VoiceChannel(tac=tac, config=voice_config)
         self.sms = SMSChannel(tac=tac, config=sms_config)
@@ -111,11 +116,9 @@ class CXAgentStudioConnector:
         payload = {"config": {"session": session}, "inputs": [{"text": message}]}
 
         def call() -> dict[str, Any]:
-            # New session per call — requests.Session isn't thread-safe.
-            with AuthorizedSession(self._creds) as http:
-                response = http.post(url, json=payload, timeout=_RUN_SESSION_TIMEOUT_S)
-                response.raise_for_status()
-                return response.json()
+            response = self._session.post(url, json=payload, timeout=_RUN_SESSION_TIMEOUT_S)
+            response.raise_for_status()
+            return response.json()
 
         data = await asyncio.to_thread(call)
         return self._parse_response(data)
@@ -129,12 +132,17 @@ class CXAgentStudioConnector:
         """
         outputs = data.get("outputs") or []
         texts = [
-            output["text"]
+            output["text"].strip()
             for output in outputs
             if isinstance(output, dict) and isinstance(output.get("text"), str)
         ]
+        texts = [t for t in texts if t]
         if texts:
-            return "".join(texts)
+            return " ".join(texts)
 
-        logger.warning("No text found in CES runSession response", response=data)
+        logger.warning(
+            "No text found in CES runSession response",
+            output_count=len(outputs),
+            output_keys=[sorted(o.keys()) for o in outputs if isinstance(o, dict)],
+        )
         return "I didn't get a response from the agent. Please try again."

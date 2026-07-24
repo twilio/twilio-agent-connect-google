@@ -43,7 +43,7 @@ class CXAgentStudioConnector:
     Conversation history is kept server-side by CES, keyed by session. This
     connector uses the TAC conversation id as the CES session id, so every turn
     of a conversation maps to the same session and CES maintains the context (no
-    local history is built). TAC memory is injected into the first message.
+    local history is built). TAC memory is injected whenever TAC supplies it.
 
     Args:
         tac: TAC instance for channel integration.
@@ -70,14 +70,11 @@ class CXAgentStudioConnector:
         self._creds, _ = google.auth.default(
             scopes=["https://www.googleapis.com/auth/cloud-platform"]
         )
-        self._started: set[str] = set()
-        self._started_lock = asyncio.Lock()
 
         self.voice = VoiceChannel(tac=tac, config=voice_config)
         self.sms = SMSChannel(tac=tac, config=sms_config)
 
         self.tac.on_message_ready(self._handle_message)
-        self.tac.on_conversation_ended(self._handle_conversation_ended)
 
         logger.debug("CXAgentStudioConnector initialized", agent_id=self.agent_id)
 
@@ -91,15 +88,8 @@ class CXAgentStudioConnector:
             conv_id = context.conversation_id
             message = user_message
 
-            # Inject TAC memory once, on the first message of the conversation.
-            # CES keeps the rest of the history server-side by session. The
-            # lock guards the check-and-add against concurrent first turns for
-            # the same conversation (e.g. overlapping webhook deliveries).
-            async with self._started_lock:
-                is_first_turn = conv_id not in self._started
-                self._started.add(conv_id)
-
-            if is_first_turn and memory_response:
+            # memory_mode already decides how often TAC supplies memory_response.
+            if memory_response:
                 memory_context = MemoryPromptBuilder.build(memory_response, context)
                 if memory_context:
                     message = f"{memory_context}\n\n{user_message}"
@@ -121,8 +111,7 @@ class CXAgentStudioConnector:
         payload = {"config": {"session": session}, "inputs": [{"text": message}]}
 
         def call() -> dict[str, Any]:
-            # A fresh AuthorizedSession per call: requests.Session isn't
-            # guaranteed thread-safe, and this runs in a thread pool.
+            # New session per call — requests.Session isn't thread-safe.
             with AuthorizedSession(self._creds) as http:
                 response = http.post(url, json=payload, timeout=_RUN_SESSION_TIMEOUT_S)
                 response.raise_for_status()
@@ -149,9 +138,3 @@ class CXAgentStudioConnector:
 
         logger.warning("No text found in CES runSession response", response=data)
         return "I didn't get a response from the agent. Please try again."
-
-    def _handle_conversation_ended(self, context: ConversationSession) -> None:
-        self._started.discard(context.conversation_id)
-        logger.debug(
-            "Cleaned up conversation", conversation_id=context.conversation_id
-        )

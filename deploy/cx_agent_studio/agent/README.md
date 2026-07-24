@@ -41,4 +41,9 @@ Twilio ConversationRelay handles speech, so only text is exchanged and CES keeps
 the conversation history server-side (one session id per conversation).
 
 Authentication uses Application Default Credentials — the Cloud Run service
-account needs the `roles/ces.client` role (granted by `server/deploy.sh`).
+account needs the `roles/ces.client` role (granted by `server/deploy.sh`). To
+run `invoke.py` locally, log in first so ADC has credentials to use:
+
+```bash
+gcloud auth application-default login
+```

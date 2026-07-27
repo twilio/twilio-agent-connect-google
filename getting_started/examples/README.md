@@ -2,6 +2,7 @@
 
 Connect Twilio to GCP agents:
 - **Agent Platform Runtime** - Custom agents (LangChain, LangGraph, ADK)
+- **CX Agent Studio** - Agents built in CX Agent Studio (Customer Engagement Suite)
 
 ---
 
@@ -43,6 +44,57 @@ gcloud auth application-default login
 
 ```bash
 python agent_platform_runtime.py
+```
+
+### 5. Expose with ngrok
+
+```bash
+ngrok http 8000
+```
+
+### 6. Configure Twilio Webhooks
+
+- Voice (phone number "A call comes in"): `https://your-domain.ngrok.io/twiml`
+- SMS (Conversation Orchestrator status callback): `https://your-domain.ngrok.io/webhook`
+
+---
+
+## CX Agent Studio Example
+
+### 1. Build an Agent in CX Agent Studio
+
+Build and deploy the agent in the CX Agent Studio console — see
+[`deploy/cx_agent_studio/agent/README.md`](../../deploy/cx_agent_studio/agent/README.md).
+Copy its resource name for the `.env` below.
+
+### 2. Configure Environment
+
+Create `.env` file:
+
+```bash
+# CX Agent Studio (agent lives in the CES `us` multi-region)
+CX_AGENT_ID=projects/your-project/locations/us/apps/your-app-id
+
+# Twilio
+TWILIO_ACCOUNT_SID=your_account_sid
+TWILIO_AUTH_TOKEN=your_auth_token
+TWILIO_API_KEY=your_api_key
+TWILIO_API_SECRET=your_api_secret
+TWILIO_PHONE_NUMBER=+1234567890
+TWILIO_CONVERSATION_CONFIGURATION_ID=conv_config_xxx
+TWILIO_VOICE_PUBLIC_DOMAIN=your-domain.ngrok.io
+```
+
+### 3. Authenticate
+
+```bash
+gcloud auth application-default login
+```
+
+### 4. Run Server
+
+```bash
+python cx_agent_studio.py
 ```
 
 ### 5. Expose with ngrok

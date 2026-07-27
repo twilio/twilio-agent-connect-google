@@ -3,12 +3,11 @@
 from tac_google.connectors.agent_platform_runtime_connector import (
     AgentPlatformRuntimeConnector,
 )
-
-# Future connectors will be imported as they are implemented
-# from tac_google.connectors.adk_connector import ADKConnector
+from tac_google.connectors.cx_agent_studio_connector import (
+    CXAgentStudioConnector,
+)
 
 __all__ = [
     "AgentPlatformRuntimeConnector",
-    # Future connectors:
-    # "ADKConnector",
+    "CXAgentStudioConnector",
 ]

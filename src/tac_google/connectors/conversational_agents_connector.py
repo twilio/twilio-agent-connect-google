@@ -72,7 +72,12 @@ class ConversationalAgentsConnector:
         self.tac = tac
         self.agent_id = agent_id.rstrip("/")
         parts = self.agent_id.split("/")
-        if len(parts) < 4 or parts[0] != "projects" or parts[2] != "locations":
+        if (
+            len(parts) < 6
+            or parts[0] != "projects"
+            or parts[2] != "locations"
+            or parts[4] != "agents"
+        ):
             raise ValueError(
                 "agent_id must look like "
                 "'projects/<project>/locations/<location>/agents/<agent-id>', "

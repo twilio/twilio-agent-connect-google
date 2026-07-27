@@ -45,8 +45,8 @@ class ConversationalAgentsConnector:
     (default 30 min). This connector derives one stable session id per
     conversation (a UUID hash of the TAC conversation id, to fit Dialogflow's
     36-char session id limit) and reuses it on every turn, so Dialogflow keeps
-    the context (no local history is built). TAC memory is injected into the
-    first message.
+    the context (no local history is built). TAC memory is injected whenever
+    TAC supplies it.
 
     Args:
         tac: TAC instance for channel integration.
@@ -72,6 +72,12 @@ class ConversationalAgentsConnector:
         self.tac = tac
         self.agent_id = agent_id.rstrip("/")
         parts = self.agent_id.split("/")
+        if len(parts) < 4 or parts[0] != "projects" or parts[2] != "locations":
+            raise ValueError(
+                "agent_id must look like "
+                "'projects/<project>/locations/<location>/agents/<agent-id>', "
+                f"got {agent_id!r}"
+            )
         self._project = parts[1]
         location = parts[3]
         self.language_code = language_code
@@ -96,13 +102,11 @@ class ConversationalAgentsConnector:
             if isinstance(creds, google.oauth2.credentials.Credentials)
             else {}
         )
-        self._started: set[str] = set()
 
         self.voice = VoiceChannel(tac=tac, config=voice_config)
         self.sms = SMSChannel(tac=tac, config=sms_config)
 
         self.tac.on_message_ready(self._handle_message)
-        self.tac.on_conversation_ended(self._handle_conversation_ended)
 
         logger.debug("ConversationalAgentsConnector initialized", agent_id=self.agent_id)
 
@@ -116,14 +120,11 @@ class ConversationalAgentsConnector:
             conv_id = context.conversation_id
             message = user_message
 
-            # Inject TAC memory once, on the first message of the conversation.
-            # Dialogflow keeps the rest of the history server-side by session id.
-            if conv_id not in self._started:
-                self._started.add(conv_id)
-                if memory_response:
-                    memory_context = MemoryPromptBuilder.build(memory_response, context)
-                    if memory_context:
-                        message = f"{memory_context}\n\n{user_message}"
+            # memory_mode already decides how often TAC supplies memory_response.
+            if memory_response:
+                memory_context = MemoryPromptBuilder.build(memory_response, context)
+                if memory_context:
+                    message = f"{memory_context}\n\n{user_message}"
 
             session = f"{self.agent_id}/sessions/{uuid.uuid5(_SESSION_NAMESPACE, conv_id)}"
             return await self._detect_intent(session, message)
@@ -148,8 +149,7 @@ class ConversationalAgentsConnector:
             response.raise_for_status()
             return response.json()
 
-        loop = asyncio.get_event_loop()
-        data = await loop.run_in_executor(None, call)
+        data = await asyncio.to_thread(call)
         return self._parse_response(data)
 
     def _parse_response(self, data: dict[str, Any]) -> str:
@@ -158,15 +158,13 @@ class ConversationalAgentsConnector:
         Reply text lives in queryResult.responseMessages[].text.text (a list).
         """
         messages = data.get("queryResult", {}).get("responseMessages", [])
-        texts = [t for m in messages for t in m.get("text", {}).get("text", [])]
+        texts = [t.strip() for m in messages for t in m.get("text", {}).get("text", [])]
+        texts = [t for t in texts if t]
         if texts:
-            return " ".join(part.strip() for part in texts if part).strip()
+            return " ".join(texts)
 
-        logger.warning("No text found in Dialogflow CX detectIntent response", response=data)
-        return "I didn't get a response from the agent. Please try again."
-
-    def _handle_conversation_ended(self, context: ConversationSession) -> None:
-        self._started.discard(context.conversation_id)
-        logger.debug(
-            "Cleaned up conversation", conversation_id=context.conversation_id
+        logger.warning(
+            "No text found in Dialogflow CX detectIntent response",
+            message_count=len(messages),
         )
+        return "I didn't get a response from the agent. Please try again."

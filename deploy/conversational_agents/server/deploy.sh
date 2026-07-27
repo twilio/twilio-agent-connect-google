@@ -47,6 +47,9 @@ while IFS= read -r line || [ -n "$line" ]; do
     esac
     case " $SECRET_ENV_KEYS " in *" $key "*) continue ;; esac
     val="${val%\"}"; val="${val#\"}"
+    # Escape backslashes and double quotes so values containing them still
+    # produce valid YAML.
+    val="${val//\\/\\\\}"; val="${val//\"/\\\"}"
     printf '%s: "%s"\n' "$key" "$val" >> "$ENV_YAML"
 done < "$ENV_FILE"
 
@@ -97,7 +100,9 @@ echo "==> Building image..."
 
 # --- Deploy ----------------------------------------------------------------
 # timeout + no-cpu-throttling keep long-lived WebSocket calls alive;
-# min/max-instances 1 because the connector keeps conversation state in memory.
+# min/max-instances 1 because VoiceChannel's default ThreadSafeSessionManager
+# tracks in-flight tasks (e.g. voice barge-in) in process memory — Dialogflow
+# itself holds conversation history server-side by session id.
 echo "==> Deploying service..."
 gcloud run deploy "$SERVICE" \
     --project "$PROJECT" \

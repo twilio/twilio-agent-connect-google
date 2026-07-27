@@ -29,19 +29,23 @@ graph TB
         Secret[🔐 Secret Manager<br/>Twilio credentials]
     end
 
+    %% Voice Channel Flow (A-D)
     Customer -->|A. Phone Call| Phone
     Phone -->|B. POST /twiml| Server
     Server -->|C. TwiML wss:// URL| Phone
     Phone <-->|D. ConversationRelay text| Server
 
+    %% Messaging Channel Flow (1-7)
     Customer -->|1. SMS| Phone
-    Phone -->|2. POST /webhook| Server
-    Server -->|3. Forward to Agent| Agent
-    Agent -->|4. SMS Response| Phone
+    Phone -->|2| Orchestrator
+    Orchestrator -->|3. POST /webhook<br/>status callback| Server
+    Server -->|4. detectIntent| Agent
+    Agent -->|5. Response| Server
+    Server -->|6. SMS Response via<br/>Conversations API| Orchestrator
+    Orchestrator -->|7| Phone
 
-    Server -->|detectIntent| Agent
+    %% Cloud Run integrations
     Server -.->|reads credentials| Secret
-    Server --> Orchestrator
     Server --> Memory
     Phone -->|Response| Customer
 

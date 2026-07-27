@@ -13,6 +13,7 @@ import os
 import uuid
 
 import google.auth
+import google.oauth2.credentials
 from dotenv import load_dotenv
 from google.auth.transport.requests import AuthorizedSession
 
@@ -31,8 +32,8 @@ def extract_text(data: dict) -> str:
     Reply text lives in queryResult.responseMessages[].text.text (a list).
     """
     messages = data.get("queryResult", {}).get("responseMessages", [])
-    parts = [t for m in messages for t in m.get("text", {}).get("text", [])]
-    return " ".join(p.strip() for p in parts if p).strip()
+    parts = [t.strip() for m in messages for t in m.get("text", {}).get("text", [])]
+    return " ".join(p for p in parts if p)
 
 
 def main():
@@ -49,8 +50,13 @@ def main():
     # One session for the whole run so Dialogflow keeps the session state.
     session = f"{agent}/sessions/{uuid.uuid4()}"
     url = f"https://{dialogflow_host(location)}/v3/{session}:detectIntent"
-    # User ADC calls to the Dialogflow API require a quota project header.
-    headers = {"X-Goog-User-Project": project}
+    # The quota project header is only needed (and only valid) for user ADC;
+    # a service account would need serviceusage.services.use to set it.
+    headers = (
+        {"X-Goog-User-Project": project}
+        if isinstance(creds, google.oauth2.credentials.Credentials)
+        else {}
+    )
 
     print(f"\nConnecting to agent {agent}...\n")
     print("Agent ready - press Ctrl+C to exit.\n")

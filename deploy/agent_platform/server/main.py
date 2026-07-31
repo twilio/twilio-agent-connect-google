@@ -12,6 +12,8 @@ from dotenv import load_dotenv
 from vertexai import agent_engines
 
 from tac import TAC, TACConfig
+from tac.channels.sms import SMSChannelConfig
+from tac.channels.voice import VoiceChannelConfig
 from tac.server import TACFastAPIServer
 from tac_google.connectors import AgentPlatformRuntimeConnector
 
@@ -25,7 +27,12 @@ vertexai.init(project=GCP_PROJECT, location=GCP_LOCATION)
 tac = TAC(config=TACConfig.from_env())
 agent = agent_engines.get(REASONING_ENGINE_ID)
 
-connector = AgentPlatformRuntimeConnector(tac=tac, agent=agent)
+connector = AgentPlatformRuntimeConnector(
+    tac=tac,
+    agent=agent,
+    voice_config=VoiceChannelConfig(memory_mode="once"),
+    sms_config=SMSChannelConfig(memory_mode="once"),
+)
 
 server = TACFastAPIServer(
     tac=tac,

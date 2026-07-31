@@ -41,6 +41,8 @@ import os
 from dotenv import load_dotenv
 
 from tac import TAC, TACConfig
+from tac.channels.sms import SMSChannelConfig
+from tac.channels.voice import VoiceChannelConfig
 from tac.server import TACFastAPIServer
 from tac_google.connectors import ConversationalAgentsConnector
 
@@ -55,6 +57,8 @@ connector = ConversationalAgentsConnector(
     tac=tac,
     agent_id=CONVERSATIONAL_AGENT_ID,
     language_code=DIALOGFLOW_LANGUAGE_CODE,
+    voice_config=VoiceChannelConfig(memory_mode="once"),
+    sms_config=SMSChannelConfig(memory_mode="once"),
 )
 
 server = TACFastAPIServer(

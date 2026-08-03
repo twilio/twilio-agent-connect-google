@@ -40,6 +40,8 @@ import os
 from dotenv import load_dotenv
 
 from tac import TAC, TACConfig
+from tac.channels.sms import SMSChannelConfig
+from tac.channels.voice import VoiceChannelConfig
 from tac.server import TACFastAPIServer
 from tac_google.connectors import CXAgentStudioConnector
 
@@ -49,7 +51,12 @@ CX_AGENT_ID = os.environ["CX_AGENT_ID"]
 
 tac = TAC(config=TACConfig.from_env())
 
-connector = CXAgentStudioConnector(tac=tac, agent_id=CX_AGENT_ID)
+connector = CXAgentStudioConnector(
+    tac=tac,
+    agent_id=CX_AGENT_ID,
+    voice_config=VoiceChannelConfig(memory_mode="once"),
+    sms_config=SMSChannelConfig(memory_mode="once"),
+)
 
 server = TACFastAPIServer(
     tac=tac,

@@ -9,7 +9,6 @@ from typing import Any
 import google.auth
 import google.oauth2.credentials
 from google.auth.transport.requests import AuthorizedSession
-
 from tac.adapters import MemoryPromptBuilder
 from tac.channels.sms import SMSChannel, SMSChannelConfig
 from tac.channels.voice import VoiceChannel, VoiceChannelConfig
@@ -93,9 +92,7 @@ class ConversationalAgentsConnector:
         )
         self._endpoint = f"https://{host}/v3/{{session}}:detectIntent"
 
-        creds, _ = google.auth.default(
-            scopes=["https://www.googleapis.com/auth/cloud-platform"]
-        )
+        creds, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
         self._http = AuthorizedSession(creds)
         # The Dialogflow API needs a quota project header only for user ADC
         # (e.g. `gcloud auth application-default login`). A service account

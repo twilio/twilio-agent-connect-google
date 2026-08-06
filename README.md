@@ -33,9 +33,9 @@ Google Cloud-specific connectors for [Twilio Agent Connect (TAC)](https://github
 ## Features
 
 ### Agent Runtime Integration
-- **GCP Agent Platform Runtime** (Reasoning Engine) via `AgentPlatformRuntimeConnector` — connect an agent built with any framework; the connector auto-detects its invocation shape:
-  - **Custom Python / LangChain / LangGraph / AG2** — single synchronous `query()` call
-  - **Google ADK** — session-based, streaming `stream_query()`
+- **GCP Agent Platform Runtime** (Reasoning Engine) — two connectors, one per deployment type:
+  - **`ADKAgentEngineConnector`** — Google ADK agents, session-based, streaming `async_stream_query()`
+  - **`StudioAgentEngineConnector`** — Agent Studio apps, invoked over the `streamQuery` REST endpoint
 - **CX Agent Studio** (Customer Engagement Suite) via `CXAgentStudioConnector` — connect an agent built in the CX Agent Studio console; invoked over the CES text `runSession` API
 - **Conversational Agents** (Dialogflow CX) via `ConversationalAgentsConnector` — connect an agent built in the Conversational Agents console; invoked over the Dialogflow CX `detectIntent` API (works for Playbook and Flow agents)
 
@@ -51,7 +51,7 @@ Google Cloud-specific connectors for [Twilio Agent Connect (TAC)](https://github
 ### Production Ready
 - **Twilio webhook validation** - Automatic signature verification for secure integrations
 - **Secret Manager** - Twilio credentials stored in Google Secret Manager, injected at runtime
-- **Session & memory** - Server-side sessions (ADK) or in-process history (query family), with TAC memory injection
+- **Session & memory** - Server-side sessions (ADK and Agent Studio), with TAC memory injection
 
 ## Installation
 
@@ -110,7 +110,8 @@ TWILIO_VOICE_PUBLIC_DOMAIN=your-domain.ngrok.io
 
 Full examples available in [`getting_started/examples/`](getting_started/examples/):
 
-- **`agent_platform_runtime.py`** - Connect Twilio to an agent deployed on GCP Agent Platform Runtime (custom Python, LangChain, or ADK)
+- **`agent_platform/adk_agent_engine.py`** - Connect Twilio to an ADK agent deployed on GCP Agent Platform Runtime
+- **`agent_platform/studio_agent_engine.py`** - Connect Twilio to an Agent Studio app deployed on GCP Agent Platform Runtime
 - **`cx_agent_studio.py`** - Connect Twilio to an agent built in CX Agent Studio (Customer Engagement Suite)
 - **`conversational_agents.py`** - Connect Twilio to an agent built in Conversational Agents (Dialogflow CX)
 
@@ -119,10 +120,10 @@ Full examples available in [`getting_started/examples/`](getting_started/example
 See [`deploy/README.md`](deploy/README.md) for production deployment guides:
 
 ### Cloud Run (Agent Platform Runtime) ⭐ Recommended
-- Deploy your **agent** to Agent Platform Runtime (custom / LangChain / ADK) and the **TAC server** to Cloud Run
+- Deploy your **agent** (ADK, or a source-code app built in Agent Studio) to Agent Platform Runtime and the **TAC server** to Cloud Run
 - Public HTTPS URL + WebSocket for Twilio ConversationRelay (voice)
 - Twilio credentials stored in Secret Manager
-- One shared `.env` and a `make` workflow (`create-sa`, `deploy-agent`, `deploy-secret`, `deploy-server`, `deploy-all`)
+- Two fully independent setups (`adk/` and `studio/`), each with its own `.env` and `make` workflow (`create-sa`, `deploy-secret`, `deploy-server`, `deploy-all`)
 - See [`deploy/agent_platform/`](deploy/agent_platform/) for the setup guide
 
 ### Cloud Run (CX Agent Studio)

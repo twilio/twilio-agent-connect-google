@@ -1,18 +1,19 @@
 # Examples
 
 Connect Twilio to GCP agents:
-- **Agent Platform Runtime** - Custom agents (LangChain, LangGraph, ADK)
+- **ADK Agent Engine** - ADK agents deployed on GCP Agent Platform Runtime
+- **Agent Studio Agent Engine** - Agent Studio apps deployed on GCP Agent Platform Runtime
 - **CX Agent Studio** - Agents built in CX Agent Studio (Customer Engagement Suite)
 - **Conversational Agents** - Agents built in Conversational Agents (Dialogflow CX)
 
 ---
 
-## Agent Platform Runtime Example
+## ADK Agent Engine Example
 
-### 1. Deploy an Agent to GCP
+### 1. Deploy an ADK Agent to GCP
 
-Deploy an agent to Agent Platform Runtime — see
-[`deploy/agent_platform/README.md`](../../deploy/agent_platform/README.md)
+Deploy an ADK agent to Agent Platform Runtime — see
+[`deploy/agent_platform/adk/README.md`](../../deploy/agent_platform/adk/README.md)
 (`make deploy-agent`). Save the printed agent ID for the `.env` below.
 
 ### 2. Configure Environment
@@ -44,7 +45,60 @@ gcloud auth application-default login
 ### 4. Run Server
 
 ```bash
-python agent_platform_runtime.py
+python agent_platform/adk_agent_engine.py
+```
+
+### 5. Expose with ngrok
+
+```bash
+ngrok http 8000
+```
+
+### 6. Configure Twilio Webhooks
+
+- Voice (phone number "A call comes in"): `https://your-domain.ngrok.io/twiml`
+- SMS (Conversation Orchestrator status callback): `https://your-domain.ngrok.io/webhook`
+
+---
+
+## Agent Studio Agent Engine Example
+
+### 1. Build and Deploy an Agent in Agent Studio
+
+Build and deploy the agent in the Agent Studio console — see
+[`deploy/agent_platform/studio/agent/README.md`](../../deploy/agent_platform/studio/agent/README.md).
+Save its resource ID for the `.env` below.
+
+### 2. Configure Environment
+
+Create `.env` file:
+
+```bash
+# GCP (Agent Studio currently stores and deploys agents in us-west1 only)
+GOOGLE_CLOUD_PROJECT=your-project-id
+GOOGLE_CLOUD_LOCATION=us-west1
+GCP_REASONING_ENGINE_ID=your-agent-id
+
+# Twilio
+TWILIO_ACCOUNT_SID=your_account_sid
+TWILIO_AUTH_TOKEN=your_auth_token
+TWILIO_API_KEY=your_api_key
+TWILIO_API_SECRET=your_api_secret
+TWILIO_PHONE_NUMBER=+1234567890
+TWILIO_CONVERSATION_CONFIGURATION_ID=conv_config_xxx
+TWILIO_VOICE_PUBLIC_DOMAIN=your-domain.ngrok.io
+```
+
+### 3. Authenticate
+
+```bash
+gcloud auth application-default login
+```
+
+### 4. Run Server
+
+```bash
+python agent_platform/studio_agent_engine.py
 ```
 
 ### 5. Expose with ngrok

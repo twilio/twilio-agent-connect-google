@@ -1,0 +1,5 @@
+.env
+
+# adk deploy staging temp dirs (auto-created under agent/, usually auto-removed)
+adk_tmp*/
+__pycache__/

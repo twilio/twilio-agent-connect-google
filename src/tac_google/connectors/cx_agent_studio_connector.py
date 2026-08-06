@@ -7,7 +7,6 @@ from typing import Any
 
 import google.auth
 from google.auth.transport.requests import AuthorizedSession
-
 from tac.adapters import MemoryPromptBuilder
 from tac.channels.sms import SMSChannel, SMSChannelConfig
 from tac.channels.voice import VoiceChannel, VoiceChannelConfig
@@ -67,9 +66,7 @@ class CXAgentStudioConnector:
         self.tac = tac
         self.agent_id = agent_id.rstrip("/")
 
-        creds, _ = google.auth.default(
-            scopes=["https://www.googleapis.com/auth/cloud-platform"]
-        )
+        creds, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
         # Shared across calls for connection pooling. AuthorizedSession/Credentials
         # refresh isn't strictly guarded against concurrent refresh, but the
         # window is narrow (tokens live ~1h) and a resulting 401 is

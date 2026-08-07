@@ -114,7 +114,7 @@ class StudioAgentEngineConnector(AgentEngineConnectorBase):
         conv_id = context.conversation_id
         session_id = self._sanitize_session_id(conv_id)
         user_id = context.profile_id or "anonymous"
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
 
         if conv_id not in self.studio_sessions_created:
 
@@ -123,7 +123,8 @@ class StudioAgentEngineConnector(AgentEngineConnectorBase):
                     f"{self._sessions_url}?sessionId={session_id}",
                     json={"userId": user_id},
                 )
-                response.raise_for_status()
+                if response.status_code != 409:
+                    response.raise_for_status()
 
             await loop.run_in_executor(None, create_session)
             self.studio_sessions_created.add(conv_id)

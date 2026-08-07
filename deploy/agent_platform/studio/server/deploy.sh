@@ -8,7 +8,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
-ENV_FILE="$SCRIPT_DIR/../.env"   # adk/.env
+ENV_FILE="$SCRIPT_DIR/../.env"   # studio/.env
 
 if [ ! -f "$ENV_FILE" ]; then
     echo "❌ Error: $ENV_FILE not found — copy .env.example to .env and fill it in first."

@@ -2,15 +2,22 @@
 
 from __future__ import annotations
 
+import asyncio
 import re
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
+import google.auth
+from google.auth.transport.requests import AuthorizedSession
+from tac.adapters import MemoryPromptBuilder
 from tac.channels.sms import SMSChannel, SMSChannelConfig
 from tac.channels.voice import VoiceChannel, VoiceChannelConfig
 from tac.core.logging import get_logger
 from tac.core.tac import TAC
 from tac.models.session import ConversationSession
 from tac.models.tac import TACMemoryResponse
+
+if TYPE_CHECKING:
+    from vertexai._genai.types.common import AgentEngine
 
 logger = get_logger(__name__)
 
@@ -32,6 +39,10 @@ class AgentEngineConnectorBase:
         self.tac = tac
         self.voice = VoiceChannel(tac=tac, config=voice_config)
         self.sms = SMSChannel(tac=tac, config=sms_config)
+
+        self._last_injected_memory: dict[str, str] = {}
+        creds, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
+        self._agent_engine_http = AuthorizedSession(creds)
 
         self.tac.on_message_ready(self._handle_message)
         self.tac.on_conversation_ended(self._handle_conversation_ended)
@@ -62,7 +73,71 @@ class AgentEngineConnectorBase:
             return "I encountered an error processing your message. Please try again."
 
     def _handle_conversation_ended(self, context: ConversationSession) -> None:
-        pass
+        self._last_injected_memory.pop(context.conversation_id, None)
+
+    def _maybe_tag_message(
+        self,
+        user_message: str,
+        context: ConversationSession,
+        memory_response: TACMemoryResponse | None,
+    ) -> str:
+        """Injects memory only when it has changed since the last turn.
+
+        ADK and Agent Studio persist every sent message in the session and
+        replay the full history on each call, so re-tagging unchanged memory
+        (memory_mode="once" returns the same cached memory every turn) would
+        duplicate it once per turn already in history. memory_mode="always"
+        re-queries per turn and typically returns different content, so it
+        keeps getting tagged.
+        """
+        conv_id = context.conversation_id
+        if not memory_response:
+            return user_message
+
+        memory_context = MemoryPromptBuilder.build(memory_response, context)
+        if not memory_context or self._last_injected_memory.get(conv_id) == memory_context:
+            return user_message
+
+        self._last_injected_memory[conv_id] = memory_context
+        return self._tag_message(user_message, memory_context)
+
+    @staticmethod
+    def _agent_engine_base_url(agent: AgentEngine) -> str:
+        """Builds the Agent Engine REST base URL (.../reasoningEngines/ID) for a deployed agent."""
+        if agent.api_resource is None or agent.api_resource.name is None:
+            raise ValueError("agent.api_resource.name is unset — pass a fetched, deployed agent")
+        resource_name = agent.api_resource.name  # projects/P/locations/L/reasoningEngines/ID
+        location = resource_name.split("/")[3]
+        return f"https://{location}-aiplatform.googleapis.com/v1/{resource_name}"
+
+    async def _create_session(self, sessions_url: str, session_id: str, user_id: str) -> None:
+        """Creates an Agent Engine session over REST, tolerating an already-exists error.
+
+        Called directly over REST rather than through SDK-bound methods: the
+        SDK's `async_create_session` wraps every Reasoning Engine failure
+        (including a duplicate session ID) in the same generic 400 "Internal
+        Server Error" with no way to tell them apart. The Sessions REST API
+        is also a plain 400 (INVALID_ARGUMENT, not 409) for a duplicate ID,
+        but with a specific message — "Session with user-provided ID ...
+        already exists." — confirmed empirically against a deployed agent,
+        and distinct from other 400s (e.g. an invalid session_id format
+        returns a different message). Session IDs are deterministic (derived
+        from conv_id), so a process restart or scale event can lose in-memory
+        "already created" tracking while the session itself still exists —
+        this is what lets that recover instead of erroring every turn after.
+        """
+        loop = asyncio.get_running_loop()
+
+        def create_session() -> None:
+            response = self._agent_engine_http.post(
+                f"{sessions_url}?sessionId={session_id}",
+                json={"userId": user_id},
+            )
+            if response.status_code == 400 and "already exists" in response.text:
+                return
+            response.raise_for_status()
+
+        await loop.run_in_executor(None, create_session)
 
     @staticmethod
     def _sanitize_session_id(conv_id: str) -> str:
@@ -79,10 +154,7 @@ class AgentEngineConnectorBase:
         """Wraps memory ahead of the user's text in explicit delimiters.
 
         Both ADK and Agent Studio deployments only expose one content channel
-        per call (no separate instructions/context parameter), so memory is
-        tagged and re-sent fresh on every message rather than stored — this
-        keeps it current for memory_mode="always" without duplicating it in
-        the session's stored history.
+        per call (no separate instructions/context parameter).
         """
         return (
             f"<MEMORY>\n{memory_context}\n</MEMORY>\n\n"

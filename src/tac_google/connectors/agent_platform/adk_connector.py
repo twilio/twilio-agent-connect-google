@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from tac.adapters import MemoryPromptBuilder
 from tac.channels.sms import SMSChannelConfig
 from tac.channels.voice import VoiceChannelConfig
 from tac.core.tac import TAC
@@ -24,11 +23,12 @@ class ADKAgentEngineConnector(AgentEngineConnectorBase):
     Connector for an ADK agent deployed on GCP Agent Platform Runtime (Agent Engine).
 
     ADK deployments are session-based and streaming: a session is created once
-    per conversation and reused, with `async_stream_query()` invoked per
-    message. `async_create_session`/`async_stream_query` are always registered
-    for an ADK deployment (ADK's own AdkApp template hard-codes this in its
-    `register_operations()`), so this connector calls them directly with no
-    method-detection needed.
+    per conversation (over REST, to get a clean "already exists" signal — see
+    `AgentEngineConnectorBase._create_session`) and reused, with
+    `async_stream_query()` invoked per message via the SDK — `async_stream_query`
+    is always registered for an ADK deployment (ADK's own AdkApp template
+    hard-codes this in its `register_operations()`), so no method-detection
+    is needed for it.
 
     TAC memory is injected on every message, wrapped in `<MEMORY>...</MEMORY>`
     ahead of the user's text (wrapped in `<USER_MESSAGE>...</USER_MESSAGE>`),
@@ -81,6 +81,7 @@ class ADKAgentEngineConnector(AgentEngineConnectorBase):
         self.agent = agent
         self.adk_sessions_created: set[str] = set()
         super().__init__(tac, sms_config, voice_config)
+        self._sessions_url = f"{self._agent_engine_base_url(agent)}/sessions"
 
     async def _invoke_agent(
         self,
@@ -93,15 +94,10 @@ class ADKAgentEngineConnector(AgentEngineConnectorBase):
         user_id = context.profile_id or "anonymous"
 
         if conv_id not in self.adk_sessions_created:
-            # async_create_session is bound at runtime by _register_api_methods()
-            # from the deployed agent's class_methods spec; static stubs don't know it.
-            await self.agent.async_create_session(user_id=user_id, session_id=session_id)  # type: ignore[attr-defined]
+            await self._create_session(self._sessions_url, session_id, user_id)
             self.adk_sessions_created.add(conv_id)
 
-        if memory_response:
-            memory_context = MemoryPromptBuilder.build(memory_response, context)
-            if memory_context:
-                user_message = self._tag_message(user_message, memory_context)
+        user_message = self._maybe_tag_message(user_message, context, memory_response)
 
         # Only this turn's message is sent — no local conversation history to
         # maintain. ADK reconstructs the full history from the session's
@@ -118,4 +114,5 @@ class ADKAgentEngineConnector(AgentEngineConnectorBase):
         return self._parse_event_stream_text(events)
 
     def _handle_conversation_ended(self, context: ConversationSession) -> None:
+        super()._handle_conversation_ended(context)
         self.adk_sessions_created.discard(context.conversation_id)

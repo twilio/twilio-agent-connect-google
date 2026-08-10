@@ -6,9 +6,6 @@ import asyncio
 import json
 from typing import TYPE_CHECKING, Any
 
-import google.auth
-from google.auth.transport.requests import AuthorizedSession
-from tac.adapters import MemoryPromptBuilder
 from tac.channels.sms import SMSChannelConfig
 from tac.channels.voice import VoiceChannelConfig
 from tac.core.tac import TAC
@@ -32,10 +29,9 @@ class StudioAgentEngineConnector(AgentEngineConnectorBase):
     registered with `query`/`stream_query` methods the SDK can bind to (the
     SDK doesn't detect class methods for them at all), so this connector
     talks to them directly over REST instead of through SDK-bound methods:
-    - `POST .../sessions?sessionId=...` to create a session once per
-      conversation (confirmed empirically against a deployed Studio agent —
-      this is the same Agent Engine Sessions API the ADK connector uses via
-      the SDK, just called directly).
+    - Session creation via `AgentEngineConnectorBase._create_session` (same
+      Sessions REST API the ADK connector also uses directly, for the same
+      reason: a clean "already exists" signal).
     - `POST .../:streamQuery` with `class_method: "async_stream_query"` to
       invoke it, passing only this turn's message and the `session_id` —
       same as the ADK connector, ADK reconstructs the full history from the
@@ -92,18 +88,11 @@ class StudioAgentEngineConnector(AgentEngineConnectorBase):
     ) -> None:
         self.agent = agent
         self.studio_sessions_created: set[str] = set()
+        super().__init__(tac, sms_config, voice_config)
 
-        if agent.api_resource is None or agent.api_resource.name is None:
-            raise ValueError("agent.api_resource.name is unset — pass a fetched, deployed agent")
-        resource_name = agent.api_resource.name  # projects/P/locations/L/reasoningEngines/ID
-        location = resource_name.split("/")[3]
-        base_url = f"https://{location}-aiplatform.googleapis.com/v1/{resource_name}"
+        base_url = self._agent_engine_base_url(agent)
         self._sessions_url = f"{base_url}/sessions"
         self._stream_query_url = f"{base_url}:streamQuery"
-        creds, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
-        self._studio_session = AuthorizedSession(creds)
-
-        super().__init__(tac, sms_config, voice_config)
 
     async def _invoke_agent(
         self,
@@ -117,25 +106,13 @@ class StudioAgentEngineConnector(AgentEngineConnectorBase):
         loop = asyncio.get_running_loop()
 
         if conv_id not in self.studio_sessions_created:
-
-            def create_session() -> None:
-                response = self._studio_session.post(
-                    f"{self._sessions_url}?sessionId={session_id}",
-                    json={"userId": user_id},
-                )
-                if response.status_code != 409:
-                    response.raise_for_status()
-
-            await loop.run_in_executor(None, create_session)
+            await self._create_session(self._sessions_url, session_id, user_id)
             self.studio_sessions_created.add(conv_id)
 
-        if memory_response:
-            memory_context = MemoryPromptBuilder.build(memory_response, context)
-            if memory_context:
-                user_message = self._tag_message(user_message, memory_context)
+        user_message = self._maybe_tag_message(user_message, context, memory_response)
 
         def run_stream_query() -> list[dict[str, Any]]:
-            response = self._studio_session.post(
+            response = self._agent_engine_http.post(
                 self._stream_query_url,
                 json={
                     "class_method": "async_stream_query",
@@ -166,4 +143,5 @@ class StudioAgentEngineConnector(AgentEngineConnectorBase):
         return events
 
     def _handle_conversation_ended(self, context: ConversationSession) -> None:
+        super()._handle_conversation_ended(context)
         self.studio_sessions_created.discard(context.conversation_id)

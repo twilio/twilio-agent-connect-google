@@ -42,7 +42,8 @@ class CXAgentStudioConnector:
     Conversation history is kept server-side by CES, keyed by session. This
     connector uses the TAC conversation id as the CES session id, so every turn
     of a conversation maps to the same session and CES maintains the context (no
-    local history is built). TAC memory is injected whenever TAC supplies it.
+    local history is built). TAC memory is injected only when it changes
+    turn-to-turn (see `_maybe_tag_memory`).
 
     Args:
         tac: TAC instance for channel integration.
@@ -65,6 +66,7 @@ class CXAgentStudioConnector:
     ) -> None:
         self.tac = tac
         self.agent_id = agent_id.rstrip("/")
+        self._last_injected_memory: dict[str, str] = {}
 
         creds, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
         # Shared across calls for connection pooling. AuthorizedSession/Credentials
@@ -77,6 +79,7 @@ class CXAgentStudioConnector:
         self.sms = SMSChannel(tac=tac, config=sms_config)
 
         self.tac.on_message_ready(self._handle_message)
+        self.tac.on_conversation_ended(self._handle_conversation_ended)
 
         logger.debug("CXAgentStudioConnector initialized", agent_id=self.agent_id)
 
@@ -88,14 +91,7 @@ class CXAgentStudioConnector:
     ) -> str | None:
         try:
             conv_id = context.conversation_id
-            message = user_message
-
-            # memory_mode already decides how often TAC supplies memory_response.
-            if memory_response:
-                memory_context = MemoryPromptBuilder.build(memory_response, context)
-                if memory_context:
-                    message = f"{memory_context}\n\n{user_message}"
-
+            message = self._maybe_tag_memory(user_message, context, memory_response)
             session = f"{self.agent_id}/sessions/{conv_id}"
             return await self._run_session(session, message)
 
@@ -107,6 +103,28 @@ class CXAgentStudioConnector:
                 exc_info=True,
             )
             return "I encountered an error processing your message. Please try again."
+
+    def _maybe_tag_memory(
+        self,
+        user_message: str,
+        context: ConversationSession,
+        memory_response: TACMemoryResponse | None,
+    ) -> str:
+        """Prepends memory to the message only when its content has changed.
+
+        CES replays the full session history on every call, so re-prepending
+        unchanged memory (memory_mode="once") would duplicate it each turn.
+        """
+        conv_id = context.conversation_id
+        if not memory_response:
+            return user_message
+
+        memory_context = MemoryPromptBuilder.build(memory_response, context)
+        if not memory_context or self._last_injected_memory.get(conv_id) == memory_context:
+            return user_message
+
+        self._last_injected_memory[conv_id] = memory_context
+        return f"{memory_context}\n\n{user_message}"
 
     async def _run_session(self, session: str, message: str) -> str:
         url = f"https://{_CES_HOST}/v1/{session}:runSession"
@@ -143,3 +161,6 @@ class CXAgentStudioConnector:
             output_keys=[sorted(o.keys()) for o in outputs if isinstance(o, dict)],
         )
         return "I didn't get a response from the agent. Please try again."
+
+    def _handle_conversation_ended(self, context: ConversationSession) -> None:
+        self._last_injected_memory.pop(context.conversation_id, None)

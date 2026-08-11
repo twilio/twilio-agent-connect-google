@@ -86,6 +86,29 @@ class TestInvokeAgent:
         assert "likes pizza" in sent_message
         assert "hello" in sent_message
 
+    @pytest.mark.asyncio
+    async def test_failed_call_does_not_commit_memory(self):
+        """A failed streamQuery call must not mark memory as sent —
+        otherwise the next turn (memory_mode="once", unchanged content)
+        would skip re-sending memory Studio never actually received."""
+        connector = make_bare_connector(Mock())
+        response = Mock()
+        response.raise_for_status.side_effect = RuntimeError("boom")
+        connector._agent_engine_http.post.return_value = response
+        context = make_context()
+
+        with (
+            patch.object(connector, "_create_session", new=AsyncMock()),
+            patch(
+                "tac_google.connectors.agent_platform._base.MemoryPromptBuilder.build",
+                return_value="likes pizza",
+            ),
+            pytest.raises(RuntimeError),
+        ):
+            await connector._invoke_agent("hello", context, Mock())
+
+        assert context.conversation_id not in connector._last_injected_memory
+
 
 class TestParseStudioEvents:
     def test_parses_concatenated_json_events(self):

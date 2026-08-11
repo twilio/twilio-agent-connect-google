@@ -97,7 +97,9 @@ class ADKAgentEngineConnector(AgentEngineConnectorBase):
             await self._create_session(self._sessions_url, session_id, user_id)
             self.adk_sessions_created.add(conv_id)
 
-        user_message = self._maybe_tag_message(user_message, context, memory_response)
+        user_message, memory_to_commit = self._maybe_tag_message(
+            user_message, context, memory_response
+        )
 
         # Only this turn's message is sent — no local conversation history to
         # maintain. ADK reconstructs the full history from the session's
@@ -111,6 +113,8 @@ class ADKAgentEngineConnector(AgentEngineConnectorBase):
                 session_id=session_id,
             )
         ]
+        if memory_to_commit is not None:
+            self._last_injected_memory[conv_id] = memory_to_commit
         return self._parse_event_stream_text(events)
 
     def _handle_conversation_ended(self, context: ConversationSession) -> None:

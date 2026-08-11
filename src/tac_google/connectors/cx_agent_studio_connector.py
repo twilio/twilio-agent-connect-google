@@ -91,9 +91,14 @@ class CXAgentStudioConnector:
     ) -> str | None:
         try:
             conv_id = context.conversation_id
-            message = self._maybe_tag_memory(user_message, context, memory_response)
+            message, memory_to_commit = self._maybe_tag_memory(
+                user_message, context, memory_response
+            )
             session = f"{self.agent_id}/sessions/{conv_id}"
-            return await self._run_session(session, message)
+            reply = await self._run_session(session, message)
+            if memory_to_commit is not None:
+                self._last_injected_memory[conv_id] = memory_to_commit
+            return reply
 
         except Exception as e:
             logger.error(
@@ -109,22 +114,27 @@ class CXAgentStudioConnector:
         user_message: str,
         context: ConversationSession,
         memory_response: TACMemoryResponse | None,
-    ) -> str:
+    ) -> tuple[str, str | None]:
         """Prepends memory to the message only when its content has changed.
 
         CES replays the full session history on every call, so re-prepending
         unchanged memory (memory_mode="once") would duplicate it each turn.
+
+        Returns (message, memory_to_commit). memory_to_commit is None when
+        nothing should change in self._last_injected_memory; otherwise the
+        caller must commit it only after runSession succeeds — committing
+        eagerly would mark memory as sent even if the call fails, silently
+        dropping it on retry.
         """
         conv_id = context.conversation_id
         if not memory_response:
-            return user_message
+            return user_message, None
 
         memory_context = MemoryPromptBuilder.build(memory_response, context)
         if not memory_context or self._last_injected_memory.get(conv_id) == memory_context:
-            return user_message
+            return user_message, None
 
-        self._last_injected_memory[conv_id] = memory_context
-        return f"{memory_context}\n\n{user_message}"
+        return f"{memory_context}\n\n{user_message}", memory_context
 
     async def _run_session(self, session: str, message: str) -> str:
         url = f"https://{_CES_HOST}/v1/{session}:runSession"

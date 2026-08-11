@@ -3,21 +3,27 @@
 This package provides GCP-specific connectors for TAC:
 
 Connectors:
-    - AgentPlatformRuntimeConnector: Deploy custom agents (LangChain, ADK, etc.) to GCP Runtime
-    - DialogflowCXConnector: Dialogflow CX conversational flows (coming soon)
-    - ADKConnector: Agent Development Kit local agents (coming soon)
+    - ADKAgentEngineConnector: ADK agents deployed to GCP Agent Platform Runtime
+    - StudioAgentEngineConnector: Agent Studio apps deployed to GCP Agent Platform Runtime
+    - CXAgentStudioConnector: Agents built in CX Agent Studio (Customer Engagement Suite)
+    - ConversationalAgentsConnector: Agents built in Conversational Agents (Dialogflow CX)
 
 Tools:
     - TBD: Tools for function calling with Vertex AI
 """
 
 from tac_google._version import __version__
-from tac_google.connectors import AgentPlatformRuntimeConnector
+from tac_google.connectors import (
+    ADKAgentEngineConnector,
+    ConversationalAgentsConnector,
+    CXAgentStudioConnector,
+    StudioAgentEngineConnector,
+)
 
 __all__ = [
     "__version__",
-    "AgentPlatformRuntimeConnector",
-    # Future connectors (to be added as implemented)
-    # "DialogflowCXConnector",
-    # "ADKConnector",
+    "ADKAgentEngineConnector",
+    "ConversationalAgentsConnector",
+    "CXAgentStudioConnector",
+    "StudioAgentEngineConnector",
 ]

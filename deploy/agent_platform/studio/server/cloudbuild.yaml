@@ -1,0 +1,17 @@
+# Builds the TAC server image from the repo root using the Cloud Run Dockerfile,
+# then pushes it to Artifact Registry. Invoked by deploy.sh via:
+#   gcloud builds submit --config deploy/agent_platform/studio/server/cloudbuild.yaml \
+#       --substitutions=_IMAGE=<image> .
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - deploy/agent_platform/studio/server/Dockerfile
+      - -t
+      - ${_IMAGE}
+      - .
+images:
+  - ${_IMAGE}
+options:
+  logging: CLOUD_LOGGING_ONLY

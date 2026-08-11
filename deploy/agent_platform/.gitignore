@@ -1,4 +1,0 @@
-.env
-
-# adk deploy staging temp dirs (auto-created under agents/, usually auto-removed)
-adk_tmp*/

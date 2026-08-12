@@ -1,0 +1,18 @@
+# Pinned versions for the "Check package metadata" step in ci.yml.
+#
+# twine must be >=7.0.0: this package's wheel/sdist metadata is built by
+# hatchling as Metadata-Version 2.5, which twine==6.2.0 (the version pinned
+# in twilio-agent-connect-python's copy of this file) doesn't recognize —
+# `twine check` fails with "InvalidDistribution: '2.5' is not a valid
+# metadata version" even though the distribution itself is fine.
+#
+# jaraco.functools is pinned because the latest release isn't always mirrored
+# yet in Twilio's Artifactory virtual-pypi-thirdparty repo, which causes a 403
+# on download. twine is pinned alongside it to reduce future resolution drift.
+#
+# Dependabot watches this file (see dependabot.yml) and will open a PR when a
+# newer version is available on PyPI. Before merging such a PR, confirm the
+# new version is actually mirrored in Artifactory (re-run this workflow) —
+# Dependabot only checks PyPI, not Artifactory's mirror status.
+twine==7.0.0
+jaraco.functools==4.5.0

@@ -88,6 +88,28 @@ class TestInvokeAgent:
         assert "likes pizza" in captured["message"]
         assert "hello" in captured["message"]
 
+    @pytest.mark.asyncio
+    async def test_failed_call_does_not_commit_memory(self):
+        """A failed async_stream_query call must not mark memory as sent —
+        otherwise the next turn (memory_mode="once", unchanged content)
+        would skip re-sending memory ADK never actually received."""
+        agent = Mock()
+        agent.async_stream_query = Mock(side_effect=RuntimeError("boom"))
+        connector = make_bare_connector(agent)
+        context = make_context()
+
+        with (
+            patch.object(connector, "_create_session", new=AsyncMock()),
+            patch(
+                "tac_google.connectors.agent_platform._base.MemoryPromptBuilder.build",
+                return_value="likes pizza",
+            ),
+            pytest.raises(RuntimeError),
+        ):
+            await connector._invoke_agent("hello", context, Mock())
+
+        assert context.conversation_id not in connector._last_injected_memory
+
 
 class TestHandleConversationEnded:
     def test_discards_session_and_memory_tracking(self):

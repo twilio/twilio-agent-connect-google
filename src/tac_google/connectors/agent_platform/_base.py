@@ -80,7 +80,7 @@ class AgentEngineConnectorBase:
         user_message: str,
         context: ConversationSession,
         memory_response: TACMemoryResponse | None,
-    ) -> str:
+    ) -> tuple[str, str | None]:
         """Injects memory only when it has changed since the last turn.
 
         ADK and Agent Studio persist every sent message in the session and
@@ -89,17 +89,22 @@ class AgentEngineConnectorBase:
         duplicate it once per turn already in history. memory_mode="always"
         re-queries per turn and typically returns different content, so it
         keeps getting tagged.
+
+        Returns (message, memory_to_commit). memory_to_commit is None when
+        nothing should change in self._last_injected_memory; otherwise the
+        caller must commit it only after the message is actually sent —
+        committing eagerly would mark memory as sent even if the call fails,
+        silently dropping it on retry.
         """
         conv_id = context.conversation_id
         if not memory_response:
-            return user_message
+            return user_message, None
 
         memory_context = MemoryPromptBuilder.build(memory_response, context)
         if not memory_context or self._last_injected_memory.get(conv_id) == memory_context:
-            return user_message
+            return user_message, None
 
-        self._last_injected_memory[conv_id] = memory_context
-        return self._tag_message(user_message, memory_context)
+        return self._tag_message(user_message, memory_context), memory_context
 
     @staticmethod
     def _agent_engine_base_url(agent: AgentEngine) -> str:

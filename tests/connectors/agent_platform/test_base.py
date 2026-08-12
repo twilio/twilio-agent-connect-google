@@ -44,8 +44,9 @@ class TestMaybeTagMessage:
 
     def test_no_memory_response_returns_message_unchanged(self):
         base = make_bare_base()
-        result = base._maybe_tag_message("hello", self._context(), None)
-        assert result == "hello"
+        message, memory_to_commit = base._maybe_tag_message("hello", self._context(), None)
+        assert message == "hello"
+        assert memory_to_commit is None
 
     def test_empty_memory_context_returns_message_unchanged(self):
         base = make_bare_base()
@@ -53,8 +54,9 @@ class TestMaybeTagMessage:
             "tac_google.connectors.agent_platform._base.MemoryPromptBuilder.build",
             return_value=None,
         ):
-            result = base._maybe_tag_message("hello", self._context(), Mock())
-        assert result == "hello"
+            message, memory_to_commit = base._maybe_tag_message("hello", self._context(), Mock())
+        assert message == "hello"
+        assert memory_to_commit is None
 
     def test_first_turn_tags_memory(self):
         base = make_bare_base()
@@ -62,9 +64,10 @@ class TestMaybeTagMessage:
             "tac_google.connectors.agent_platform._base.MemoryPromptBuilder.build",
             return_value="user likes pizza",
         ):
-            result = base._maybe_tag_message("hello", self._context(), Mock())
-        assert "user likes pizza" in result
-        assert "hello" in result
+            message, memory_to_commit = base._maybe_tag_message("hello", self._context(), Mock())
+        assert "user likes pizza" in message
+        assert "hello" in message
+        assert memory_to_commit == "user likes pizza"
 
     def test_unchanged_memory_is_not_retagged(self):
         """memory_mode="once" returns the same cached memory every turn — this
@@ -72,41 +75,44 @@ class TestMaybeTagMessage:
         duplicate copy on every turn."""
         base = make_bare_base()
         context = self._context()
+        base._last_injected_memory[context.conversation_id] = "user likes pizza"
         with patch(
             "tac_google.connectors.agent_platform._base.MemoryPromptBuilder.build",
             return_value="user likes pizza",
         ):
-            base._maybe_tag_message("turn 1", context, Mock())
-            result = base._maybe_tag_message("turn 2", context, Mock())
-        assert result == "turn 2"
+            message, memory_to_commit = base._maybe_tag_message("turn 2", context, Mock())
+        assert message == "turn 2"
+        assert memory_to_commit is None
 
     def test_changed_memory_is_retagged(self):
         """memory_mode="always" re-queries per turn and typically returns
         different content — that must still get tagged every time."""
         base = make_bare_base()
         context = self._context()
+        base._last_injected_memory[context.conversation_id] = "memory v1"
         with patch(
             "tac_google.connectors.agent_platform._base.MemoryPromptBuilder.build",
-            side_effect=["memory v1", "memory v2"],
+            return_value="memory v2",
         ):
-            base._maybe_tag_message("turn 1", context, Mock())
-            result = base._maybe_tag_message("turn 2", context, Mock())
-        assert "memory v2" in result
-        assert "turn 2" in result
+            message, memory_to_commit = base._maybe_tag_message("turn 2", context, Mock())
+        assert "memory v2" in message
+        assert "turn 2" in message
+        assert memory_to_commit == "memory v2"
 
     def test_conversation_ended_clears_tracked_memory(self):
         base = make_bare_base()
         context = self._context()
+        base._last_injected_memory[context.conversation_id] = "user likes pizza"
+        base._handle_conversation_ended(context)
         with patch(
             "tac_google.connectors.agent_platform._base.MemoryPromptBuilder.build",
             return_value="user likes pizza",
         ):
-            base._maybe_tag_message("turn 1", context, Mock())
-            base._handle_conversation_ended(context)
             # After the conversation ends, the same memory content is tagged
             # again on a subsequent (new) conversation reusing the same content.
-            result = base._maybe_tag_message("turn 2", context, Mock())
-        assert "user likes pizza" in result
+            message, memory_to_commit = base._maybe_tag_message("turn 2", context, Mock())
+        assert "user likes pizza" in message
+        assert memory_to_commit == "user likes pizza"
 
 
 class TestAgentEngineBaseUrl:

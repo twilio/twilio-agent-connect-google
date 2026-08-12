@@ -170,14 +170,17 @@ class ConversationalAgentsConnector:
 
     async def _detect_intent(self, session: str, message: str) -> str:
         url = self._endpoint.format(session=session)
-        payload = {"queryInput": {"text": {"text": message}, "languageCode": self.language_code}}
+        payload: dict[str, Any] = {
+            "queryInput": {"text": {"text": message}, "languageCode": self.language_code}
+        }
 
         def call() -> dict[str, Any]:
             response = self._http.post(
                 url, headers=self._quota_headers, json=payload, timeout=_DETECT_INTENT_TIMEOUT_S
             )
             response.raise_for_status()
-            return response.json()
+            data: dict[str, Any] = response.json()
+            return data
 
         data = await asyncio.to_thread(call)
         return self._parse_response(data)

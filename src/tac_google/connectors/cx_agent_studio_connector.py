@@ -138,12 +138,13 @@ class CXAgentStudioConnector:
 
     async def _run_session(self, session: str, message: str) -> str:
         url = f"https://{_CES_HOST}/v1/{session}:runSession"
-        payload = {"config": {"session": session}, "inputs": [{"text": message}]}
+        payload: dict[str, Any] = {"config": {"session": session}, "inputs": [{"text": message}]}
 
         def call() -> dict[str, Any]:
             response = self._session.post(url, json=payload, timeout=_RUN_SESSION_TIMEOUT_S)
             response.raise_for_status()
-            return response.json()
+            data: dict[str, Any] = response.json()
+            return data
 
         data = await asyncio.to_thread(call)
         return self._parse_response(data)

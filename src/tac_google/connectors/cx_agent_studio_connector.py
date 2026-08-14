@@ -12,6 +12,7 @@ from tac.channels.sms import SMSChannel, SMSChannelConfig
 from tac.channels.voice import VoiceChannel, VoiceChannelConfig
 from tac.core.logging import get_logger
 from tac.core.tac import TAC
+from tac.models.handoff import PendingHandoffData
 from tac.models.session import ConversationSession
 from tac.models.tac import TACMemoryResponse
 
@@ -44,6 +45,10 @@ class CXAgentStudioConnector:
     of a conversation maps to the same session and CES maintains the context (no
     local history is built). TAC memory is injected only when it changes
     turn-to-turn (see `_maybe_tag_memory`).
+
+    The agent's `end_session` tool (attached by default to every CX Agent
+    Studio agent) lets the model decide, on its own, when a call is done —
+    see `_handle_end_session`.
 
     Args:
         tac: TAC instance for channel integration.
@@ -95,7 +100,7 @@ class CXAgentStudioConnector:
                 user_message, context, memory_response
             )
             session = f"{self.agent_id}/sessions/{conv_id}"
-            reply = await self._run_session(session, message)
+            reply = await self._run_session(session, message, context)
             if memory_to_commit is not None:
                 self._last_injected_memory[conv_id] = memory_to_commit
             return reply
@@ -136,7 +141,7 @@ class CXAgentStudioConnector:
 
         return f"{memory_context}\n\n{user_message}", memory_context
 
-    async def _run_session(self, session: str, message: str) -> str:
+    async def _run_session(self, session: str, message: str, context: ConversationSession) -> str:
         url = f"https://{_CES_HOST}/v1/{session}:runSession"
         payload: dict[str, Any] = {"config": {"session": session}, "inputs": [{"text": message}]}
 
@@ -147,7 +152,62 @@ class CXAgentStudioConnector:
             return data
 
         data = await asyncio.to_thread(call)
+        self._handle_end_session(data, context)
         return self._parse_response(data)
+
+    @staticmethod
+    def _find_end_session_metadata(outputs: list[Any]) -> dict[str, Any] | None:
+        """Returns the `endSession.metadata` dict from wherever it appears in `outputs`.
+
+        The API reference documents `outputs` as an ordered, possibly
+        multi-entry array (multiple internal steps can share one turn), but
+        doesn't specify where `endSession` lands relative to other entries —
+        so this scans the whole list rather than assuming it's outputs[-1].
+        """
+        for output in outputs:
+            if not isinstance(output, dict):
+                continue
+            end_session = output.get("endSession")
+            if isinstance(end_session, dict):
+                metadata = end_session.get("metadata")
+                return metadata if isinstance(metadata, dict) else {}
+        return None
+
+    def _handle_end_session(self, data: dict[str, Any], context: ConversationSession) -> None:
+        """Ends the call gracefully if CES's `end_session` tool fired this turn.
+
+        CES's Root agent has the `end_session` system tool attached (default
+        on every CX Agent Studio agent) — the *model* decides on its own when
+        to call it, for either a plain completion or an escalation to a human
+        (metadata.session_escalated distinguishes the two, confirmed
+        empirically). Once it fires, this CES session is dead: any further
+        turn against the same session_id gets rejected with "Session has
+        already ended", so if we don't act here the conversation is stuck
+        erroring on every subsequent turn until the caller gives up and hangs
+        up themselves.
+
+        Setting context.pending_handoff_data is the only lever TAC exposes for
+        ending a call — it makes VoiceChannel send ConversationRelay's WS
+        "end" message right after this turn's reply is delivered. We don't
+        configure an action_url for this deploy, so Twilio just hangs up;
+        there's no human-transfer destination wired up yet, so this is a
+        plain hangup regardless of metadata.session_escalated. handoff_data
+        is a required field on the model but nothing reads its content since
+        there's no action_url to receive it, so it's just a fixed placeholder
+        rather than encoding metadata we don't otherwise use.
+        """
+        outputs = data.get("outputs") or []
+        metadata = self._find_end_session_metadata(outputs)
+        if metadata is None:
+            return
+
+        logger.info(
+            "CES ended the session — hanging up",
+            conversation_id=context.conversation_id,
+            session_escalated=metadata.get("session_escalated"),
+            reason=metadata.get("reason"),
+        )
+        context.pending_handoff_data = PendingHandoffData(handoffData="call_ended")
 
     def _parse_response(self, data: dict[str, Any]) -> str:
         """Extract the reply text from a CES RunSessionResponse.
@@ -165,6 +225,12 @@ class CXAgentStudioConnector:
         texts = [t for t in texts if t]
         if texts:
             return " ".join(texts)
+
+        # end_session commonly fires with no text at all (confirmed against a
+        # real call) — "I didn't get a response" would be a confusing thing
+        # to say right as the call is ending, so use a proper closing line.
+        if self._find_end_session_metadata(outputs) is not None:
+            return "Thank you for calling. Goodbye!"
 
         logger.warning(
             "No text found in CES runSession response",

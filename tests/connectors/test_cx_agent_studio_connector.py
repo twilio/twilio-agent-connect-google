@@ -113,6 +113,17 @@ class TestHandleEndSession:
         assert context.pending_handoff_data is not None
         assert context.pending_handoff_data.handoff_data == "call_ended"
 
+    def test_endsession_with_empty_metadata_still_sets_pending_handoff_data(self):
+        """`{"endSession": {}}` (no metadata at all) is falsy-looking but must
+        still be detected — a truthiness check on the endSession dict itself
+        would miss this and leave the dead CES session unhandled."""
+        connector = make_bare_connector()
+        context = make_context()
+        data = {"outputs": [{"endSession": {}}]}
+        connector._handle_end_session(data, context)
+        assert context.pending_handoff_data is not None
+        assert context.pending_handoff_data.handoff_data == "call_ended"
+
     def test_endsession_not_in_last_output_is_still_found(self):
         """The API reference doesn't guarantee endSession lands on the last
         entry of `outputs` — only that diagnosticInfo is on the

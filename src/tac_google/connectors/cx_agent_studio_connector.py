@@ -165,8 +165,11 @@ class CXAgentStudioConnector:
         so this scans the whole list rather than assuming it's outputs[-1].
         """
         for output in outputs:
-            if isinstance(output, dict) and output.get("endSession"):
-                metadata = output["endSession"].get("metadata")
+            if not isinstance(output, dict):
+                continue
+            end_session = output.get("endSession")
+            if isinstance(end_session, dict):
+                metadata = end_session.get("metadata")
                 return metadata if isinstance(metadata, dict) else {}
         return None
 

@@ -20,13 +20,13 @@ classifiers = [
 
 dependencies = [
     # Core TAC from PyPI
-    "twilio-agent-connect>=1.0.0,<2",
+    "twilio-agent-connect>=2.2.0,<3",
 ]
 
 [project.optional-dependencies]
 # FastAPI-based TAC Server (uses TAC core's server extras)
 server = [
-    "twilio-agent-connect[server]>=1.0.0,<2",
+    "twilio-agent-connect[server]>=2.2.0,<3",
     "python-dotenv>=1.0.0",
 ]
 
@@ -58,7 +58,7 @@ dev = [
     "google-genai>=2.9,<3",
     "google-adk[a2a]>=2.2.0,<2.3",
     # Server dependencies (via TAC core)
-    "twilio-agent-connect[server]>=1.0.0,<2",
+    "twilio-agent-connect[server]>=2.2.0,<3",
     "python-dotenv>=1.0.0",
     # Dev tools
     "pytest>=7.0.0,<8",

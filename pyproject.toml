@@ -42,7 +42,7 @@ vertex-ai = [
 cx-agent-studio = [
     "google-auth>=2,<3",
     "requests>=2,<3",
-    "websockets>=13,<16",
+    "websockets>=14,<16",
 ]
 
 # Conversational Agents connector (Dialogflow CX detectIntent REST API).

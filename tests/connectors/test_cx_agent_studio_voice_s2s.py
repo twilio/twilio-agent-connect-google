@@ -1,9 +1,13 @@
 """Tests for VoiceS2SChannel and CXAgentStudioFastAPIServer's voice dispatch."""
 
+import base64
+import json
 from types import SimpleNamespace
-from unittest.mock import Mock
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
+from tac.channels.websocket_protocol import WebSocketDisconnectError
+from tac.core.logging import get_logger
 
 from tac_google.connectors.cx_agent_studio.server import CXAgentStudioFastAPIServer
 from tac_google.connectors.cx_agent_studio.voice_s2s.channel import (
@@ -21,7 +25,69 @@ def make_bare_channel(deployment_id: str | None = None) -> VoiceS2SChannel:
     channel.deployment_id = deployment_id
     channel._location = "us"
     channel._project_id = "p"
+    channel._conversations = {}
+    channel.logger = get_logger(VoiceS2SChannel.__module__)
+    channel.tac = SimpleNamespace(trigger_conversation_ended=AsyncMock())
+    channel._get_access_token = AsyncMock(return_value="test-token")  # type: ignore[method-assign]
     return channel
+
+
+class FakeTwilioWebSocket:
+    """Fake WebSocketProtocol driven by a scripted queue of inbound events."""
+
+    def __init__(self, incoming_events: list[dict]) -> None:
+        self._queue = list(incoming_events)
+        self.sent: list[dict] = []
+        self.accepted = False
+        self.closed = False
+
+    async def accept(self) -> None:
+        self.accepted = True
+
+    async def receive_json(self) -> dict:
+        if not self._queue:
+            raise WebSocketDisconnectError()
+        return self._queue.pop(0)
+
+    async def send_text(self, data: str) -> None:
+        self.sent.append(json.loads(data))
+
+    async def close(self) -> None:
+        self.closed = True
+
+
+class FakeCesWebSocket:
+    """Fake CES BidiRunSession websocket: an async-iterable message queue."""
+
+    def __init__(self, incoming_messages: list[dict]) -> None:
+        self._queue = list(incoming_messages)
+        self.sent: list[dict] = []
+        self.closed = False
+
+    def __aiter__(self) -> "FakeCesWebSocket":
+        return self
+
+    async def __anext__(self) -> str:
+        if not self._queue:
+            raise StopAsyncIteration
+        return json.dumps(self._queue.pop(0))
+
+    async def send(self, data: str) -> None:
+        self.sent.append(json.loads(data))
+
+    async def close(self) -> None:
+        self.closed = True
+
+
+def make_media_event(payload: bytes) -> dict:
+    return {
+        "event": "media",
+        "media": {"payload": base64.b64encode(payload).decode()},
+    }
+
+
+def make_ces_audio_message(payload: bytes) -> dict:
+    return {"sessionOutput": {"audio": base64.b64encode(payload).decode()}}
 
 
 class TestExtractPathSegment:
@@ -96,6 +162,102 @@ class TestNoOpChannelMethods:
         channel = make_bare_channel()
         with pytest.raises(NotImplementedError):
             await channel.send_response("conv-1", "reply")
+
+
+class TestHandleWebsocket:
+    """Exercises the Twilio<->CES media bridge in `handle_websocket`."""
+
+    @pytest.mark.asyncio
+    async def test_bidirectional_media_and_graceful_hangup(self):
+        channel = make_bare_channel()
+        twilio_ws = FakeTwilioWebSocket(
+            [
+                {"event": "start", "start": {"callSid": "CA1", "streamSid": "MZ1"}},
+                make_media_event(b"\xff" * 160),  # caller audio (mulaw silence)
+                {"event": "mark", "mark": {"name": "end_of_call"}},
+                {"event": "stop"},
+            ]
+        )
+        ces_ws = FakeCesWebSocket(
+            [
+                make_ces_audio_message(b"\x00\x00" * 480),  # agent audio (linear16 silence)
+                {"endSession": {}},
+            ]
+        )
+
+        with patch("websockets.connect", AsyncMock(return_value=ces_ws)):
+            await channel.handle_websocket(twilio_ws)
+
+        assert twilio_ws.accepted
+        assert twilio_ws.closed
+        assert ces_ws.closed
+        channel.tac.trigger_conversation_ended.assert_awaited_once()
+
+        # Caller audio was resampled and forwarded to CES as realtimeInput.
+        caller_audio_messages = [
+            m for m in ces_ws.sent if "realtimeInput" in m and "audio" in m["realtimeInput"]
+        ]
+        assert len(caller_audio_messages) == 1
+
+        # Agent audio came back as a Twilio "media" event.
+        media_events = [m for m in twilio_ws.sent if m.get("event") == "media"]
+        assert len(media_events) == 1
+        assert media_events[0]["streamSid"] == "MZ1"
+
+        # A "mark" was sent to Twilio before hanging up on endSession.
+        mark_events = [m for m in twilio_ws.sent if m.get("event") == "mark"]
+        assert len(mark_events) == 1
+        assert mark_events[0]["mark"]["name"] == "end_of_call"
+
+    @pytest.mark.asyncio
+    async def test_barge_in_clears_twilio_buffered_audio(self):
+        channel = make_bare_channel()
+        twilio_ws = FakeTwilioWebSocket(
+            [
+                {"event": "start", "start": {"callSid": "CA1", "streamSid": "MZ1"}},
+                {"event": "stop"},
+            ]
+        )
+        ces_ws = FakeCesWebSocket([{"interruptionSignal": {}}])
+
+        with patch("websockets.connect", AsyncMock(return_value=ces_ws)):
+            await channel.handle_websocket(twilio_ws)
+
+        clear_events = [m for m in twilio_ws.sent if m.get("event") == "clear"]
+        assert clear_events == [{"event": "clear", "streamSid": "MZ1"}]
+
+    @pytest.mark.asyncio
+    async def test_endsession_mark_ack_timeout_still_hangs_up(self):
+        """If Twilio never echoes the mark back, the timeout fires and the
+        call still ends instead of hanging forever."""
+        channel = make_bare_channel()
+        twilio_ws = FakeTwilioWebSocket(
+            [{"event": "start", "start": {"callSid": "CA1", "streamSid": "MZ1"}}]
+        )
+        ces_ws = FakeCesWebSocket([{"endSession": {}}])
+
+        with (
+            patch("websockets.connect", AsyncMock(return_value=ces_ws)),
+            patch(
+                "tac_google.connectors.cx_agent_studio.voice_s2s.channel._END_OF_CALL_MARK_TIMEOUT_S",
+                0.05,
+            ),
+        ):
+            await channel.handle_websocket(twilio_ws)
+
+        assert ces_ws.closed
+        assert twilio_ws.closed
+
+    @pytest.mark.asyncio
+    async def test_twilio_disconnect_before_start_cleans_up_without_conversation(self):
+        channel = make_bare_channel()
+        twilio_ws = FakeTwilioWebSocket([])  # disconnects immediately
+
+        await channel.handle_websocket(twilio_ws)
+
+        assert twilio_ws.accepted
+        assert twilio_ws.closed
+        channel.tac.trigger_conversation_ended.assert_not_awaited()
 
 
 class TestCXAgentStudioFastAPIServerVoiceDispatch:

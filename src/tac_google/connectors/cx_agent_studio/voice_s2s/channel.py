@@ -23,7 +23,6 @@ import traceback
 from typing import Any
 
 import google.auth
-import websockets
 from google.auth.transport.requests import Request as GoogleAuthRequest
 from tac.channels.base import BaseChannel
 from tac.channels.websocket_protocol import WebSocketDisconnectError, WebSocketProtocol
@@ -44,6 +43,13 @@ _AGENT_AUDIO_ENCODING = "LINEAR16"
 _AGENT_INPUT_SAMPLE_RATE = 16000
 _AGENT_OUTPUT_SAMPLE_RATE = 48000
 _TWILIO_AUDIO_SAMPLE_RATE = 8000
+
+# Twilio buffers/plays outbound media asynchronously, so closing the stream
+# right after sending the last chunk can cut it off. This <Connect>-scoped
+# mark name lets us wait for Twilio's playback-complete echo before hanging
+# up on endSession.
+_END_OF_CALL_MARK_NAME = "end_of_call"
+_END_OF_CALL_MARK_TIMEOUT_S = 5
 
 
 def _extract_path_segment(resource_name: str, segment: str) -> str | None:
@@ -188,6 +194,7 @@ class VoiceS2SChannel(BaseChannel):
         twilio_to_ces_state: Any = None
         ces_to_twilio_state: Any = None
         ces_ready = asyncio.Event()
+        playback_flushed = asyncio.Event()
 
         async def forward_twilio_to_ces() -> None:
             nonlocal conv_id, stream_sid, ces_ws, twilio_to_ces_state
@@ -210,6 +217,8 @@ class VoiceS2SChannel(BaseChannel):
                     headers = {"Authorization": f"Bearer {token}"}
                     if self._project_id:
                         headers["X-Goog-User-Project"] = self._project_id
+
+                    import websockets
 
                     session = f"{self.agent_id}/sessions/{call_sid}"
                     bidi_run_session_url = (
@@ -264,6 +273,10 @@ class VoiceS2SChannel(BaseChannel):
                     logger.info("Twilio media stream stopped", conversation_id=conv_id)
                     return
 
+                elif event == "mark":
+                    if (data.get("mark") or {}).get("name") == _END_OF_CALL_MARK_NAME:
+                        playback_flushed.set()
+
                 else:
                     logger.debug("Ignoring media stream event", event=event)
 
@@ -275,6 +288,26 @@ class VoiceS2SChannel(BaseChannel):
 
                 if "endSession" in data:
                     logger.info("CES ended the S2S session", conversation_id=conv_id)
+                    if stream_sid:
+                        await websocket.send_text(
+                            json.dumps(
+                                {
+                                    "event": "mark",
+                                    "streamSid": stream_sid,
+                                    "mark": {"name": _END_OF_CALL_MARK_NAME},
+                                }
+                            )
+                        )
+                        try:
+                            await asyncio.wait_for(
+                                playback_flushed.wait(), timeout=_END_OF_CALL_MARK_TIMEOUT_S
+                            )
+                        except asyncio.TimeoutError:
+                            logger.warning(
+                                "Timed out waiting for Twilio to confirm playback before "
+                                "hanging up",
+                                conversation_id=conv_id,
+                            )
                     return
 
                 if "interruptionSignal" in data:

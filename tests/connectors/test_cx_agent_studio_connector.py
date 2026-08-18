@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from tac_google.connectors.cx_agent_studio_connector import CXAgentStudioConnector
+from tac_google.connectors.cx_agent_studio.connector import CXAgentStudioConnector
 
 
 def make_bare_connector() -> CXAgentStudioConnector:
@@ -30,7 +30,7 @@ class TestMaybeTagMemory:
     def test_first_turn_prepends_memory(self):
         connector = make_bare_connector()
         with patch(
-            "tac_google.connectors.cx_agent_studio_connector.MemoryPromptBuilder.build",
+            "tac_google.connectors.cx_agent_studio.connector.MemoryPromptBuilder.build",
             return_value="user likes pizza",
         ):
             message, memory_to_commit = connector._maybe_tag_memory("hello", make_context(), Mock())
@@ -45,7 +45,7 @@ class TestMaybeTagMemory:
         context = make_context()
         connector._last_injected_memory[context.conversation_id] = "user likes pizza"
         with patch(
-            "tac_google.connectors.cx_agent_studio_connector.MemoryPromptBuilder.build",
+            "tac_google.connectors.cx_agent_studio.connector.MemoryPromptBuilder.build",
             return_value="user likes pizza",
         ):
             message, memory_to_commit = connector._maybe_tag_memory("turn 2", context, Mock())
@@ -57,7 +57,7 @@ class TestMaybeTagMemory:
         context = make_context()
         connector._last_injected_memory[context.conversation_id] = "memory v1"
         with patch(
-            "tac_google.connectors.cx_agent_studio_connector.MemoryPromptBuilder.build",
+            "tac_google.connectors.cx_agent_studio.connector.MemoryPromptBuilder.build",
             return_value="memory v2",
         ):
             message, memory_to_commit = connector._maybe_tag_memory("turn 2", context, Mock())
@@ -70,7 +70,7 @@ class TestMaybeTagMemory:
         connector._last_injected_memory[context.conversation_id] = "user likes pizza"
         connector._handle_conversation_ended(context)
         with patch(
-            "tac_google.connectors.cx_agent_studio_connector.MemoryPromptBuilder.build",
+            "tac_google.connectors.cx_agent_studio.connector.MemoryPromptBuilder.build",
             return_value="user likes pizza",
         ):
             message, memory_to_commit = connector._maybe_tag_memory("turn 2", context, Mock())
@@ -164,7 +164,7 @@ class TestHandleMessageMemoryCommit:
         with (
             patch.object(connector, "_run_session", new=AsyncMock(return_value="reply")),
             patch(
-                "tac_google.connectors.cx_agent_studio_connector.MemoryPromptBuilder.build",
+                "tac_google.connectors.cx_agent_studio.connector.MemoryPromptBuilder.build",
                 return_value="user likes pizza",
             ),
         ):
@@ -184,7 +184,7 @@ class TestHandleMessageMemoryCommit:
                 connector, "_run_session", new=AsyncMock(side_effect=RuntimeError("boom"))
             ),
             patch(
-                "tac_google.connectors.cx_agent_studio_connector.MemoryPromptBuilder.build",
+                "tac_google.connectors.cx_agent_studio.connector.MemoryPromptBuilder.build",
                 return_value="user likes pizza",
             ),
         ):

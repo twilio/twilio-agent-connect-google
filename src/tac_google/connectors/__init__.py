@@ -7,8 +7,10 @@ from tac_google.connectors.agent_platform import (
 from tac_google.connectors.conversational_agents_connector import (
     ConversationalAgentsConnector,
 )
-from tac_google.connectors.cx_agent_studio_connector import (
+from tac_google.connectors.cx_agent_studio import (
     CXAgentStudioConnector,
+    VoiceS2SChannel,
+    VoiceS2SConfig,
 )
 
 __all__ = [
@@ -16,4 +18,6 @@ __all__ = [
     "ConversationalAgentsConnector",
     "CXAgentStudioConnector",
     "StudioAgentEngineConnector",
+    "VoiceS2SChannel",
+    "VoiceS2SConfig",
 ]

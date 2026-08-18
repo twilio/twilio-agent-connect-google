@@ -16,6 +16,8 @@ from tac.models.handoff import PendingHandoffData
 from tac.models.session import ConversationSession
 from tac.models.tac import TACMemoryResponse
 
+from tac_google.connectors.cx_agent_studio.voice_s2s import VoiceS2SChannel, VoiceS2SConfig
+
 logger = get_logger(__name__)
 
 _CES_HOST = "ces.googleapis.com"
@@ -26,39 +28,45 @@ class CXAgentStudioConnector:
     """
     Connector for agents built in CX Agent Studio (Customer Engagement Suite).
 
-    CX Agent Studio agents are not Agent Platform Runtime (reasoningEngines)
-    resources and expose no query/stream_query SDK methods. They are invoked
-    over the CES REST API (`ces.googleapis.com`), so this connector calls the
-    text `runSession` method directly (v1):
+    CX Agent Studio agents aren't Agent Platform Runtime (reasoningEngines)
+    resources and expose no query/stream_query SDK methods, so this connector
+    calls the CES REST API's text `runSession` method directly (v1):
 
         POST https://ces.googleapis.com/v1/<app>/sessions/<session>:runSession
         body: {"config": {"session": "<app>/sessions/<session>"},
                "inputs": [{"text": "<message>"}]}
         reply: response["outputs"][*]["text"]
 
-    Voice runs on Twilio ConversationRelay, which does the speech-to-text and
-    text-to-speech, so this connector only exchanges text with the agent — the
-    CES native-audio streaming session is not used. SMS is text too.
+    Text is all this connector exchanges with the agent, for both SMS and
+    (ConversationRelay) voice — the CES native-audio streaming session isn't
+    used here.
 
-    Conversation history is kept server-side by CES, keyed by session. This
-    connector uses the TAC conversation id as the CES session id, so every turn
-    of a conversation maps to the same session and CES maintains the context (no
-    local history is built). TAC memory is injected only when it changes
-    turn-to-turn (see `_maybe_tag_memory`).
+    Conversation history is kept server-side by CES: the TAC conversation id
+    doubles as the CES session id, so every turn lands in the same session
+    and no local history is built. TAC memory is injected only when it
+    changes turn-to-turn (see `_maybe_tag_memory`).
 
-    The agent's `end_session` tool (attached by default to every CX Agent
-    Studio agent) lets the model decide, on its own, when a call is done —
-    see `_handle_end_session`.
+    Every CX Agent Studio agent has an `end_session` tool attached by
+    default, letting the model decide on its own when a call is done — see
+    `_handle_end_session`.
 
     Args:
         tac: TAC instance for channel integration.
         agent_id: The CES agent (app) resource name, e.g.
             `projects/<project>/locations/<location>/apps/<app-id>`.
         sms_config: Optional SMS channel configuration (SMSChannelConfig or dict).
-        voice_config: Optional Voice channel configuration (VoiceChannelConfig or dict).
+        voice_config: Pass a `VoiceChannelConfig` for ConversationRelay voice
+            (builds `self.voice_cascaded`) or a `VoiceS2SConfig` for native
+            speech-to-speech voice (builds `self.voice_s2s`) — the config
+            type decides which channel gets built, which is why a plain dict
+            isn't accepted here. Omit (None) for no voice channel.
 
     Attributes:
-        voice: VoiceChannel instance for voice conversations.
+        voice_cascaded: VoiceChannel for ConversationRelay voice, or None.
+        voice_s2s: VoiceS2SChannel for native speech-to-speech voice, or None.
+        voice: Whichever of the two above actually got built (or None) — for
+            callers that don't care which voice approach is active, e.g. a
+            server wiring up `voice_channel=connector.voice`.
         sms: SMSChannel instance for SMS conversations.
     """
 
@@ -67,21 +75,34 @@ class CXAgentStudioConnector:
         tac: TAC,
         agent_id: str,
         sms_config: SMSChannelConfig | dict[str, Any] | None = None,
-        voice_config: VoiceChannelConfig | dict[str, Any] | None = None,
+        voice_config: VoiceChannelConfig | VoiceS2SConfig | None = None,
     ) -> None:
         self.tac = tac
         self.agent_id = agent_id.rstrip("/")
         self._last_injected_memory: dict[str, str] = {}
 
         creds, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
-        # Shared across calls for connection pooling. AuthorizedSession/Credentials
-        # refresh isn't strictly guarded against concurrent refresh, but the
-        # window is narrow (tokens live ~1h) and a resulting 401 is
-        # auto-retried with a fresh refresh by AuthorizedSession itself.
+        # Shared across calls for connection pooling. Not guarded against
+        # concurrent token refresh, but AuthorizedSession auto-retries a
+        # resulting 401 with a fresh refresh.
         self._session = AuthorizedSession(creds)
 
-        self.voice = VoiceChannel(tac=tac, config=voice_config)
         self.sms = SMSChannel(tac=tac, config=sms_config)
+
+        self.voice_cascaded: VoiceChannel | None = None
+        self.voice_s2s: VoiceS2SChannel | None = None
+        self.voice: VoiceChannel | VoiceS2SChannel | None = None
+        if isinstance(voice_config, VoiceS2SConfig):
+            self.voice_s2s = VoiceS2SChannel(tac=tac, agent_id=self.agent_id, config=voice_config)
+            self.voice = self.voice_s2s
+        elif isinstance(voice_config, VoiceChannelConfig):
+            self.voice_cascaded = VoiceChannel(tac=tac, config=voice_config)
+            self.voice = self.voice_cascaded
+        elif voice_config is not None:
+            raise TypeError(
+                f"voice_config must be a VoiceChannelConfig, a VoiceS2SConfig, or None — "
+                f"got {type(voice_config).__name__}."
+            )
 
         self.tac.on_message_ready(self._handle_message)
         self.tac.on_conversation_ended(self._handle_conversation_ended)
@@ -127,9 +148,8 @@ class CXAgentStudioConnector:
 
         Returns (message, memory_to_commit). memory_to_commit is None when
         nothing should change in self._last_injected_memory; otherwise the
-        caller must commit it only after runSession succeeds — committing
-        eagerly would mark memory as sent even if the call fails, silently
-        dropping it on retry.
+        caller must commit it only after runSession succeeds, so a failed
+        call doesn't silently mark memory as sent.
         """
         conv_id = context.conversation_id
         if not memory_response:
@@ -159,10 +179,9 @@ class CXAgentStudioConnector:
     def _find_end_session_metadata(outputs: list[Any]) -> dict[str, Any] | None:
         """Returns the `endSession.metadata` dict from wherever it appears in `outputs`.
 
-        The API reference documents `outputs` as an ordered, possibly
-        multi-entry array (multiple internal steps can share one turn), but
-        doesn't specify where `endSession` lands relative to other entries —
-        so this scans the whole list rather than assuming it's outputs[-1].
+        `outputs` can hold multiple entries per turn, and the API doesn't
+        specify where `endSession` lands among them, so this scans the whole
+        list rather than assuming it's outputs[-1].
         """
         for output in outputs:
             if not isinstance(output, dict):
@@ -176,25 +195,19 @@ class CXAgentStudioConnector:
     def _handle_end_session(self, data: dict[str, Any], context: ConversationSession) -> None:
         """Ends the call gracefully if CES's `end_session` tool fired this turn.
 
-        CES's Root agent has the `end_session` system tool attached (default
-        on every CX Agent Studio agent) — the *model* decides on its own when
-        to call it, for either a plain completion or an escalation to a human
-        (metadata.session_escalated distinguishes the two, confirmed
-        empirically). Once it fires, this CES session is dead: any further
-        turn against the same session_id gets rejected with "Session has
-        already ended", so if we don't act here the conversation is stuck
-        erroring on every subsequent turn until the caller gives up and hangs
-        up themselves.
+        The model decides on its own when to call `end_session` (plain
+        completion or escalation — metadata.session_escalated distinguishes
+        the two). Once it fires, the CES session is dead: any further turn
+        against the same session_id gets rejected with "Session has already
+        ended", so without this the conversation would error on every
+        subsequent turn until the caller gives up.
 
-        Setting context.pending_handoff_data is the only lever TAC exposes for
-        ending a call — it makes VoiceChannel send ConversationRelay's WS
-        "end" message right after this turn's reply is delivered. We don't
-        configure an action_url for this deploy, so Twilio just hangs up;
-        there's no human-transfer destination wired up yet, so this is a
-        plain hangup regardless of metadata.session_escalated. handoff_data
-        is a required field on the model but nothing reads its content since
-        there's no action_url to receive it, so it's just a fixed placeholder
-        rather than encoding metadata we don't otherwise use.
+        Setting context.pending_handoff_data is the only lever TAC exposes
+        for ending a call — it makes VoiceChannel send ConversationRelay's
+        WS "end" message after this turn's reply. No action_url is
+        configured for this deploy, so Twilio just hangs up regardless of
+        session_escalated; handoff_data is required by the model but unread,
+        so it's a fixed placeholder.
         """
         outputs = data.get("outputs") or []
         metadata = self._find_end_session_metadata(outputs)
@@ -226,9 +239,8 @@ class CXAgentStudioConnector:
         if texts:
             return " ".join(texts)
 
-        # end_session commonly fires with no text at all (confirmed against a
-        # real call) — "I didn't get a response" would be a confusing thing
-        # to say right as the call is ending, so use a proper closing line.
+        # end_session commonly fires with no text at all — "I didn't get a
+        # response" would be a confusing thing to say as the call ends.
         if self._find_end_session_metadata(outputs) is not None:
             return "Thank you for calling. Goodbye!"
 

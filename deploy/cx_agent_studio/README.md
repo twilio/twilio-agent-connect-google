@@ -5,17 +5,17 @@ Deploy Twilio Agent Connect with an agent built in **CX Agent Studio**
 
 The flow has two independently deployed pieces:
 - **Agent** — built and deployed in the CX Agent Studio console (no code here).
-- **TAC server** — a FastAPI app that terminates Twilio webhooks + the
-  ConversationRelay WebSocket and forwards turns to the agent, on Cloud Run.
+- **TAC server** — a FastAPI app that terminates Twilio webhooks and forwards
+  turns/audio to the agent, on Cloud Run.
 
-The agent has **no knowledge of Twilio**; the server has **no LLM logic**. The
-`CXAgentStudioConnector` is the seam between them — it calls the CES text
-`runSession` API. Twilio ConversationRelay handles speech, so only text is
-exchanged and CES keeps the conversation history server-side.
+[`server/main.py`](./server/main.py) supports two voice approaches — switch
+between them by editing that one file (see the comments in it):
 
-Unlike the [Agent Platform Runtime](../agent_platform) path (which targets
-`reasoningEngines` with the Vertex AI SDK), this targets CES agents
-(`ces.googleapis.com`).
+| | cascaded (default) | s2s |
+|---|---|---|
+| Voice | ConversationRelay — Twilio does the STT/TTS | Media Streams carries raw audio |
+| Voice + Conversation Orchestrator / TAC Memory | Yes / Yes | No / No |
+| SMS | Yes (Conversation Orchestrator, TAC Memory) | Yes (Conversation Orchestrator, TAC Memory) |
 
 ## Architecture
 
@@ -24,43 +24,31 @@ graph TB
     Customer([👤 Customer<br/>Phone Call / SMS])
 
     subgraph Twilio["☁️ Twilio Cloud"]
-        Phone[📱 Phone Number<br/>+1-XXX-XXX-XXXX]
-        Orchestrator[💬 Conversations<br/>Conversation Orchestrator]
-        Memory[🧠 Memory Service<br/>Profile & Context]
+        Phone[📱 Phone Number]
+        Orchestrator[💬 Conversation Orchestrator]
     end
 
     subgraph GCP["☁️ Google Cloud"]
         subgraph CloudRun["🏃 Cloud Run"]
-            Server[⚙️ TAC Server<br/>WebSocket/HTTP]
+            Server[⚙️ TAC Server]
         end
 
-        subgraph CES["🤖 CX Agent Studio (CES)"]
-            Agent[🧠 Deployed Agent<br/>runSession text API]
+        subgraph CES["🤖 CX Agent Studio"]
+            Agent[🧠 Deployed Agent]
         end
 
         Secret[🔐 Secret Manager<br/>Twilio credentials]
     end
 
-    %% Voice Channel Flow (A-D)
-    Customer -->|A. Phone Call| Phone
-    Phone -->|B. POST /twiml| Server
-    Server -->|C. TwiML with<br/>wss:// WebSocket URL| Phone
-    Phone <-->|D. Twilio ConversationRelay text| Server
+    Customer -->|Phone Call| Phone
+    Customer -->|SMS| Phone
+    Phone -->|Voice| Server
+    Phone <--> Orchestrator
+    Orchestrator <-->|SMS| Server
+    Server -->|voice turn| Agent
+    Server -->|SMS turn| Agent
 
-    %% Messaging Channel Flow (1-7)
-    Customer -->|1. SMS| Phone
-    Phone -->|2| Orchestrator
-    Orchestrator -->|3. POST /webhook<br/>status callback| Server
-    Server -->|4. runSession| Agent
-    Agent -->|5. Response| Server
-    Server -->|6. SMS Response via<br/>Conversations API| Orchestrator
-    Orchestrator -->|7| Phone
-
-    %% Cloud Run integrations
     Server -.->|reads credentials| Secret
-    Server --> Memory
-
-    Phone -->|Response| Customer
 
     style Customer fill:#e1f5ff
     style Twilio fill:#f0f0f0
@@ -74,7 +62,7 @@ graph TB
 ## Deployment Components
 
 - **Agent** - built and deployed in the CX Agent Studio console; see [`agent/`](./agent/)
-- **Cloud Run Service** - the TAC server (FastAPI), HTTP webhooks and WebSocket endpoints; deployed from [`server/`](./server/)
+- **Cloud Run Service** - the TAC server (FastAPI); deployed from [`server/`](./server/)
 - **Artifact Registry** - holds the server's container image (created automatically)
 - **Secret Manager** - holds the Twilio credentials, read by the Cloud Run service
 
@@ -91,7 +79,7 @@ graph TB
   - **CX Agent Studio** (Customer Engagement Suite) — build the agent there first (see [`agent/`](./agent/))
   - **Cloud Run**, **Cloud Build**, and **Artifact Registry** (enabled automatically by `server/deploy.sh`)
 - The Cloud Run runtime service account needs **`roles/ces.client`** to call the agent (granted by `server/deploy.sh`)
-- **Region:** any region with Cloud Run availability — set it via `GOOGLE_CLOUD_LOCATION` in `.env` (the agent itself lives in the CES `us` multi-region, independent of this)
+- **Region:** any region with Cloud Run availability — set it via `GOOGLE_CLOUD_LOCATION` in `.env` (the agent itself lives in the CX Agent Studio `us` multi-region, independent of this)
 
 ---
 
@@ -116,7 +104,7 @@ Edit `.env` with your values:
 GOOGLE_CLOUD_PROJECT=your-project-id
 GOOGLE_CLOUD_LOCATION=your-region
 
-# CX Agent Studio agent (from the console; location is the CES `us` multi-region)
+# CX Agent Studio agent (from the console; location is the CX Agent Studio `us` multi-region)
 CX_AGENT_ID=projects/your-project/locations/us/apps/your-app-id
 
 # Twilio Credentials
@@ -159,7 +147,13 @@ configure). The deploy grants it the roles it needs.
 make create-sa
 ```
 
-### 5. Deploy
+### 5. (Optional) Switch voice approach
+
+`server/main.py` defaults to **cascaded** (ConversationRelay). To use **s2s**
+(native speech-to-speech) instead, open that file and follow the comments —
+comment out the "cascaded" block, uncomment the "s2s" block.
+
+### 6. Deploy
 
 One command stores the secrets and deploys the server:
 
@@ -181,7 +175,7 @@ Configure Twilio:
 ```
 
 Copy these webhook URLs for Twilio configuration. Re-running `make deploy-server`
-keeps the same URL.
+keeps the same URL — including after switching between cascaded/s2s in `main.py`.
 
 ---
 
@@ -238,5 +232,5 @@ gcloud logging read \
 ## Update Code
 
 - After editing the agent: rebuild/redeploy it in the CX Agent Studio console.
-- After editing the server or the package: `make deploy-server`.
+- After editing the server or the package (including switching cascaded/s2s): `make deploy-server`.
 - After rotating Twilio credentials in `.env`: `make deploy-secret`.

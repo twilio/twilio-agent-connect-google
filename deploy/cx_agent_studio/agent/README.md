@@ -33,15 +33,7 @@ projects/<project>/locations/us/apps/<app-id>
 CX_AGENT_ID=projects/your-project/locations/us/apps/your-app-id
 ```
 
-## How it's invoked
-
-`../server/main.py` defaults to ConversationRelay voice (Twilio does the
-STT/TTS). It can also be switched to native speech-to-speech (S2S) voice
-instead — Twilio Media Streams carries raw call audio, and CX Agent Studio
-does its own speech recognition/synthesis over `BidiRunSession`
-(`wss://ces.googleapis.com/ws/google.cloud.ces.v1.SessionService/BidiRunSession/...`),
-with no text exchanged for voice and no Twilio-side STT/TTS. See the comments
-in `main.py` to switch, and [`../README.md`](../README.md) for the comparison.
+## Debugging with invoke.py
 
 `invoke.py` in this folder is a separate, simpler debugging tool — it talks to
 the agent over the CX Agent Studio **text** `runSession` API

@@ -1821,16 +1821,16 @@ wheels = [
 
 [[package]]
 name = "twilio-agent-connect"
-version = "2.2.0"
+version = "2.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
     { name = "pydantic" },
     { name = "twilio" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/80/ed/02a01ed56e309689660b8de5e1ec07ab148c8a0bcd52894ab9a4e855b2d3/twilio_agent_connect-2.2.0.tar.gz", hash = "sha256:fea9d83f6b5d55677731d79d8e6765d45329c3ee6ecb9da4978ee2819a2941ba", size = 103600 }
+sdist = { url = "https://files.pythonhosted.org/packages/9e/fd/9cabd3513607bbaa393301019b6e695ac61f0274deb460f5ee8b2e0908ab/twilio_agent_connect-2.3.0.tar.gz", hash = "sha256:9600f63ab648ea890f89d7ec4c817334cd03ca172256b21e21c3c3cc74a64294", size = 105398 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c4/72/df62ecbd2c11f8977ef91486496ea893ffd4dc64e371de313e8a41e41857/twilio_agent_connect-2.2.0-py3-none-any.whl", hash = "sha256:97f86e88af6b75dc90395885a0ccd5e5251eb58a5c0c11cf3d9e2a159bffb255", size = 133821 },
+    { url = "https://files.pythonhosted.org/packages/a3/6e/1fd6fea89fde7bcc6ceb611e82b31e394cc3561cb9c9b94c17b765aacae8/twilio_agent_connect-2.3.0-py3-none-any.whl", hash = "sha256:b9d6fc96ca73fefa571dd39f6f7abb145a27bb07f3dcac536e3eb5baad1eb9a7", size = 132970 },
 ]
 
 [package.optional-dependencies]
@@ -1900,9 +1900,9 @@ requires-dist = [
     { name = "requests", marker = "extra == 'conversational-agents'", specifier = ">=2,<3" },
     { name = "requests", marker = "extra == 'cx-agent-studio'", specifier = ">=2,<3" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8.0,<1" },
-    { name = "twilio-agent-connect", specifier = ">=2.2.0,<3" },
-    { name = "twilio-agent-connect", extras = ["server"], marker = "extra == 'dev'", specifier = ">=2.2.0,<3" },
-    { name = "twilio-agent-connect", extras = ["server"], marker = "extra == 'server'", specifier = ">=2.2.0,<3" },
+    { name = "twilio-agent-connect", specifier = ">=2.3.0,<3" },
+    { name = "twilio-agent-connect", extras = ["server"], marker = "extra == 'dev'", specifier = ">=2.3.0,<3" },
+    { name = "twilio-agent-connect", extras = ["server"], marker = "extra == 'server'", specifier = ">=2.3.0,<3" },
     { name = "types-google-cloud-ndb", marker = "extra == 'dev'", specifier = ">=2.0.0" },
     { name = "websockets", marker = "extra == 'cx-agent-studio'", specifier = ">=14,<16" },
 ]

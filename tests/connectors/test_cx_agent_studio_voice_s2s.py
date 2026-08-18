@@ -112,9 +112,7 @@ class TestCXAgentStudioFastAPIServerVoiceDispatch:
         def fake_super_init(self, *, tac, voice_channel, messaging_channels, config, app):
             captured["voice_channel"] = voice_channel
 
-        monkeypatch.setattr(
-            "tac.server.fastapi_server.TACFastAPIServer.__init__", fake_super_init
-        )
+        monkeypatch.setattr("tac.server.fastapi_server.TACFastAPIServer.__init__", fake_super_init)
         s2s_channel = make_bare_channel()
         server = CXAgentStudioFastAPIServer(tac=Mock(), voice_channel=s2s_channel)
 

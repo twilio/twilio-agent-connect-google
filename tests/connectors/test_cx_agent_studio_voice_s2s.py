@@ -280,3 +280,26 @@ class TestCXAgentStudioFastAPIServerVoiceDispatch:
 
         assert server.voice_s2s_channel is s2s_channel
         assert captured["voice_channel"] is None
+
+    def test_none_entries_in_messaging_channels_are_dropped(self, monkeypatch):
+        captured = {}
+
+        def fake_super_init(self, *, tac, voice_channel, messaging_channels, config, app):
+            captured["messaging_channels"] = messaging_channels
+
+        monkeypatch.setattr("tac.server.fastapi_server.TACFastAPIServer.__init__", fake_super_init)
+        real_channel = Mock()
+        CXAgentStudioFastAPIServer(tac=Mock(), messaging_channels=[real_channel, None])
+
+        assert captured["messaging_channels"] == [real_channel]
+
+    def test_messaging_channels_none_passes_through_unchanged(self, monkeypatch):
+        captured = {}
+
+        def fake_super_init(self, *, tac, voice_channel, messaging_channels, config, app):
+            captured["messaging_channels"] = messaging_channels
+
+        monkeypatch.setattr("tac.server.fastapi_server.TACFastAPIServer.__init__", fake_super_init)
+        CXAgentStudioFastAPIServer(tac=Mock(), messaging_channels=None)
+
+        assert captured["messaging_channels"] is None

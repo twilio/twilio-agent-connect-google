@@ -1,12 +1,9 @@
-"""Example: Native speech-to-speech (S2S) voice with a CX Agent Studio agent.
+"""Example: Native speech-to-speech (S2S) voice + SMS with a CX Agent Studio agent.
 
-Call audio flows over Twilio Media Streams and the agent does its own speech
-recognition/synthesis over `BidiRunSession` — no ConversationRelay, no
-Twilio-side STT/TTS, and no text exchanged. Voice-only (no SMS), and this
-mode doesn't support Conversation Orchestrator or TAC Memory.
+Voice audio flows over Twilio Media Streams and the agent does its own speech
+recognition/synthesis over `BidiRunSession`, instead of ConversationRelay.
 
-For text/SMS + ConversationRelay voice instead, see `cascaded.py` in this
-same folder.
+For ConversationRelay voice instead, see `cascaded.py` in this same folder.
 
 Prerequisites:
     - An agent built and deployed in CX Agent Studio
@@ -25,6 +22,7 @@ Environment Variables (in .env file):
     TWILIO_API_KEY=your_api_key
     TWILIO_API_SECRET=your_api_secret
     TWILIO_PHONE_NUMBER=+1234567890
+    TWILIO_CONVERSATION_CONFIGURATION_ID=conv_configuration_xxx
     TWILIO_VOICE_PUBLIC_DOMAIN=your-domain.ngrok.io
 
 Installation:
@@ -38,6 +36,7 @@ import os
 
 from dotenv import load_dotenv
 from tac import TAC, TACConfig
+from tac.channels.sms import SMSChannelConfig
 
 from tac_google.connectors import CXAgentStudioConnector
 from tac_google.connectors.cx_agent_studio.server import CXAgentStudioFastAPIServer
@@ -53,11 +52,13 @@ connector = CXAgentStudioConnector(
     tac=tac,
     agent_id=CX_AGENT_ID,
     voice_config=VoiceS2SConfig(),
+    sms_config=SMSChannelConfig(memory_mode="once"),
 )
 
 server = CXAgentStudioFastAPIServer(
     tac=tac,
     voice_channel=connector.voice_s2s,
+    messaging_channels=[connector.sms],
 )
 
 if __name__ == "__main__":

@@ -170,7 +170,7 @@ ngrok http 8000
 Same agent as above, but voice runs as native speech-to-speech: Twilio sends
 raw call audio over Media Streams and CX Agent Studio does its own speech
 recognition/synthesis over `BidiRunSession`, instead of Twilio ConversationRelay
-doing the STT/TTS. There is no SMS in this example — it's voice-only.
+doing the STT/TTS. SMS still works alongside it.
 
 ### 1. Build an Agent in CX Agent Studio
 
@@ -191,6 +191,7 @@ TWILIO_AUTH_TOKEN=your_auth_token
 TWILIO_API_KEY=your_api_key
 TWILIO_API_SECRET=your_api_secret
 TWILIO_PHONE_NUMBER=+1234567890
+TWILIO_CONVERSATION_CONFIGURATION_ID=conv_config_xxx
 TWILIO_VOICE_PUBLIC_DOMAIN=your-domain.ngrok.io
 ```
 
@@ -215,6 +216,7 @@ ngrok http 8000
 ### 6. Configure Twilio Webhooks
 
 - Voice (phone number "A call comes in"): `https://your-domain.ngrok.io/twiml`
+- SMS (Conversation Orchestrator status callback): `https://your-domain.ngrok.io/webhook`
 
 ---
 

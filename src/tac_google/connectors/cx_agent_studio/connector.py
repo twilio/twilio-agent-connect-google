@@ -54,7 +54,9 @@ class CXAgentStudioConnector:
         tac: TAC instance for channel integration.
         agent_id: The CES agent (app) resource name, e.g.
             `projects/<project>/locations/<location>/apps/<app-id>`.
-        sms_config: Optional SMS channel configuration (SMSChannelConfig or dict).
+        sms_config: SMS channel configuration (SMSChannelConfig or dict).
+            Defaults to a plain `SMSChannelConfig()`, so an SMS channel is
+            built unless you pass `sms_config=None` explicitly to opt out.
         voice_config: Pass a `VoiceChannelConfig` for ConversationRelay voice
             (builds `self.voice_cascaded`) or a `VoiceS2SConfig` for native
             speech-to-speech voice (builds `self.voice_s2s`) — the config
@@ -67,14 +69,15 @@ class CXAgentStudioConnector:
         voice: Whichever of the two above actually got built (or None) — for
             callers that don't care which voice approach is active, e.g. a
             server wiring up `voice_channel=connector.voice`.
-        sms: SMSChannel instance for SMS conversations.
+        sms: SMSChannel instance for SMS conversations, or None if
+            `sms_config=None` was passed explicitly to opt out.
     """
 
     def __init__(
         self,
         tac: TAC,
         agent_id: str,
-        sms_config: SMSChannelConfig | dict[str, Any] | None = None,
+        sms_config: SMSChannelConfig | dict[str, Any] | None = SMSChannelConfig(),  # noqa: B008
         voice_config: VoiceChannelConfig | VoiceS2SConfig | None = None,
     ) -> None:
         self.tac = tac
@@ -87,7 +90,7 @@ class CXAgentStudioConnector:
         # resulting 401 with a fresh refresh.
         self._session = AuthorizedSession(creds)
 
-        self.sms = SMSChannel(tac=tac, config=sms_config)
+        self.sms = SMSChannel(tac=tac, config=sms_config) if sms_config is not None else None
 
         self.voice_cascaded: VoiceChannel | None = None
         self.voice_s2s: VoiceS2SChannel | None = None

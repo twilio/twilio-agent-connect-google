@@ -13,6 +13,7 @@ from __future__ import annotations
 from fastapi import Depends, FastAPI, Response, WebSocket
 from tac.channels.messaging import MessagingChannel
 from tac.channels.voice import VoiceChannel
+from tac.core.logging import get_logger
 from tac.core.tac import TAC
 from tac.server import (
     FastAPIWebSocketAdapter,
@@ -24,6 +25,8 @@ from tac.server.fastapi_server import TACFastAPIServer
 
 from tac_google.connectors.cx_agent_studio.voice_s2s.channel import VoiceS2SChannel
 
+logger = get_logger(__name__)
+
 
 class CXAgentStudioFastAPIServer(TACFastAPIServer):
     """`TACFastAPIServer` plus support for native speech-to-speech voice.
@@ -34,7 +37,9 @@ class CXAgentStudioFastAPIServer(TACFastAPIServer):
             `VoiceS2SChannel` for native speech-to-speech voice, or None for
             no voice channel at all.
         messaging_channels: Messaging channels (SMS, etc.), same as
-            `TACFastAPIServer`.
+            `TACFastAPIServer` — except any `None` entries (e.g. an optional
+            channel a caller only conditionally built) are dropped with a
+            logged warning instead of being passed through.
         config: `TACServerConfig`, same as `TACFastAPIServer`.
         app: Existing `FastAPI` app to register routes onto, same as
             `TACFastAPIServer`.
@@ -60,6 +65,15 @@ class CXAgentStudioFastAPIServer(TACFastAPIServer):
                 f"voice_channel must be a VoiceChannel, a VoiceS2SChannel, or None — "
                 f"got {type(voice_channel).__name__}."
             )
+
+        if messaging_channels is not None:
+            filtered = [c for c in messaging_channels if c is not None]
+            if len(filtered) != len(messaging_channels):
+                logger.warning(
+                    "messaging_channels contained None entries — ignoring them",
+                    dropped=len(messaging_channels) - len(filtered),
+                )
+            messaging_channels = filtered
 
         super().__init__(
             tac=tac,

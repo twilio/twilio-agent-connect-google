@@ -37,11 +37,12 @@ vertex-ai = [
     "google-auth>=2,<3",
 ]
 
-# CX Agent Studio connector (Customer Engagement Suite REST API).
-# Lightweight: just auth + HTTP, no Vertex AI SDK.
+# CX Agent Studio connector. No Vertex AI SDK needed; `websockets` is for
+# VoiceS2SChannel's BidiRunSession client.
 cx-agent-studio = [
     "google-auth>=2,<3",
     "requests>=2,<3",
+    "websockets>=14,<16",
 ]
 
 # Conversational Agents connector (Dialogflow CX detectIntent REST API).
@@ -145,6 +146,10 @@ ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = "vertexai.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "twilio.*"
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

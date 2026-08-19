@@ -114,7 +114,7 @@ ngrok http 8000
 
 ---
 
-## CX Agent Studio Example
+## CX Agent Studio Example (cascaded)
 
 ### 1. Build an Agent in CX Agent Studio
 
@@ -127,7 +127,7 @@ Copy its resource name for the `.env` below.
 Create `.env` file:
 
 ```bash
-# CX Agent Studio (agent lives in the CES `us` multi-region)
+# CX Agent Studio (agent lives in the `us` multi-region)
 CX_AGENT_ID=projects/your-project/locations/us/apps/your-app-id
 
 # Twilio
@@ -149,7 +149,62 @@ gcloud auth application-default login
 ### 4. Run Server
 
 ```bash
-python cx_agent_studio.py
+python cx_agent_studio/cascaded.py
+```
+
+### 5. Expose with ngrok
+
+```bash
+ngrok http 8000
+```
+
+### 6. Configure Twilio Webhooks
+
+- Voice (phone number "A call comes in"): `https://your-domain.ngrok.io/twiml`
+- SMS (Conversation Orchestrator status callback): `https://your-domain.ngrok.io/webhook`
+
+---
+
+## CX Agent Studio Example (s2s)
+
+Same agent as above, but voice runs as native speech-to-speech: Twilio sends
+raw call audio over Media Streams and CX Agent Studio does its own speech
+recognition/synthesis over `BidiRunSession`, instead of Twilio ConversationRelay
+doing the STT/TTS. SMS still works alongside it.
+
+### 1. Build an Agent in CX Agent Studio
+
+Same as above — see
+[`deploy/cx_agent_studio/agent/README.md`](../../deploy/cx_agent_studio/agent/README.md).
+
+### 2. Configure Environment
+
+Create `.env` file:
+
+```bash
+# CX Agent Studio (agent lives in the `us` multi-region)
+CX_AGENT_ID=projects/your-project/locations/us/apps/your-app-id
+
+# Twilio
+TWILIO_ACCOUNT_SID=your_account_sid
+TWILIO_AUTH_TOKEN=your_auth_token
+TWILIO_API_KEY=your_api_key
+TWILIO_API_SECRET=your_api_secret
+TWILIO_PHONE_NUMBER=+1234567890
+TWILIO_CONVERSATION_CONFIGURATION_ID=conv_config_xxx
+TWILIO_VOICE_PUBLIC_DOMAIN=your-domain.ngrok.io
+```
+
+### 3. Authenticate
+
+```bash
+gcloud auth application-default login
+```
+
+### 4. Run Server
+
+```bash
+python cx_agent_studio/s2s.py
 ```
 
 ### 5. Expose with ngrok

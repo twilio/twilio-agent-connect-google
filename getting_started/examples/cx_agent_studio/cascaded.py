@@ -1,12 +1,9 @@
-"""Example: Connect Twilio to an agent built in CX Agent Studio.
+"""Example: Connect Twilio to a CX Agent Studio agent, text/SMS + ConversationRelay voice.
 
-This example shows how to:
-1. Connect to an agent built in CX Agent Studio (Customer Engagement Suite)
-2. Run a TAC FastAPI server that handles Twilio webhooks + ConversationRelay
-3. Let CES keep conversation history server-side (per session id)
+Twilio ConversationRelay handles speech, so the connector only exchanges text
+with the agent (CES REST API, text runSession).
 
-The connector talks to the agent over the CES REST API (text runSession) —
-Twilio ConversationRelay handles speech, so only text is exchanged.
+For native speech-to-speech voice instead, see `s2s.py` in this same folder.
 
 Prerequisites:
     - An agent built and deployed in CX Agent Studio
@@ -32,7 +29,7 @@ Installation:
     pip install twilio-agent-connect-google[cx-agent-studio,server] python-dotenv
 
 Run:
-    python cx_agent_studio.py
+    python cx_agent_studio/cascaded.py
 """
 
 import os
@@ -41,9 +38,9 @@ from dotenv import load_dotenv
 from tac import TAC, TACConfig
 from tac.channels.sms import SMSChannelConfig
 from tac.channels.voice import VoiceChannelConfig
-from tac.server import TACFastAPIServer
 
 from tac_google.connectors import CXAgentStudioConnector
+from tac_google.connectors.cx_agent_studio.server import CXAgentStudioFastAPIServer
 
 load_dotenv()
 
@@ -58,7 +55,7 @@ connector = CXAgentStudioConnector(
     sms_config=SMSChannelConfig(memory_mode="once"),
 )
 
-server = TACFastAPIServer(
+server = CXAgentStudioFastAPIServer(
     tac=tac,
     voice_channel=connector.voice,
     messaging_channels=[connector.sms],

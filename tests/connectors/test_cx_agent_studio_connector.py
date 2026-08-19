@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from tac_google.connectors.cx_agent_studio_connector import CXAgentStudioConnector
+from tac_google.connectors.cx_agent_studio.connector import CXAgentStudioConnector
 
 
 def make_bare_connector() -> CXAgentStudioConnector:
@@ -20,6 +20,58 @@ def make_context(conv_id: str = "conv-1") -> SimpleNamespace:
     return SimpleNamespace(conversation_id=conv_id, profile_id="user-1", pending_handoff_data=None)
 
 
+class TestSmsChannelConstruction:
+    def test_sms_channel_built_by_default_when_sms_config_omitted(self):
+        with (
+            patch(
+                "tac_google.connectors.cx_agent_studio.connector.google.auth.default"
+            ) as mock_auth,
+            patch("tac_google.connectors.cx_agent_studio.connector.AuthorizedSession"),
+            patch("tac_google.connectors.cx_agent_studio.connector.SMSChannel") as mock_sms_channel,
+        ):
+            mock_auth.return_value = (Mock(), None)
+            tac = Mock()
+            connector = CXAgentStudioConnector(tac=tac, agent_id="projects/p/locations/us/apps/a")
+
+        assert connector.sms is mock_sms_channel.return_value
+        mock_sms_channel.assert_called_once()
+        assert mock_sms_channel.call_args.kwargs["tac"] is tac
+
+    def test_sms_channel_omitted_when_sms_config_explicitly_none(self):
+        with (
+            patch(
+                "tac_google.connectors.cx_agent_studio.connector.google.auth.default"
+            ) as mock_auth,
+            patch("tac_google.connectors.cx_agent_studio.connector.AuthorizedSession"),
+            patch("tac_google.connectors.cx_agent_studio.connector.SMSChannel") as mock_sms_channel,
+        ):
+            mock_auth.return_value = (Mock(), None)
+            connector = CXAgentStudioConnector(
+                tac=Mock(), agent_id="projects/p/locations/us/apps/a", sms_config=None
+            )
+
+        assert connector.sms is None
+        mock_sms_channel.assert_not_called()
+
+    def test_sms_channel_built_when_sms_config_given(self):
+        with (
+            patch(
+                "tac_google.connectors.cx_agent_studio.connector.google.auth.default"
+            ) as mock_auth,
+            patch("tac_google.connectors.cx_agent_studio.connector.AuthorizedSession"),
+            patch("tac_google.connectors.cx_agent_studio.connector.SMSChannel") as mock_sms_channel,
+        ):
+            mock_auth.return_value = (Mock(), None)
+            sms_config = Mock()
+            tac = Mock()
+            connector = CXAgentStudioConnector(
+                tac=tac, agent_id="projects/p/locations/us/apps/a", sms_config=sms_config
+            )
+
+        assert connector.sms is mock_sms_channel.return_value
+        mock_sms_channel.assert_called_once_with(tac=tac, config=sms_config)
+
+
 class TestMaybeTagMemory:
     def test_no_memory_response_returns_message_unchanged(self):
         connector = make_bare_connector()
@@ -30,7 +82,7 @@ class TestMaybeTagMemory:
     def test_first_turn_prepends_memory(self):
         connector = make_bare_connector()
         with patch(
-            "tac_google.connectors.cx_agent_studio_connector.MemoryPromptBuilder.build",
+            "tac_google.connectors.cx_agent_studio.connector.MemoryPromptBuilder.build",
             return_value="user likes pizza",
         ):
             message, memory_to_commit = connector._maybe_tag_memory("hello", make_context(), Mock())
@@ -45,7 +97,7 @@ class TestMaybeTagMemory:
         context = make_context()
         connector._last_injected_memory[context.conversation_id] = "user likes pizza"
         with patch(
-            "tac_google.connectors.cx_agent_studio_connector.MemoryPromptBuilder.build",
+            "tac_google.connectors.cx_agent_studio.connector.MemoryPromptBuilder.build",
             return_value="user likes pizza",
         ):
             message, memory_to_commit = connector._maybe_tag_memory("turn 2", context, Mock())
@@ -57,7 +109,7 @@ class TestMaybeTagMemory:
         context = make_context()
         connector._last_injected_memory[context.conversation_id] = "memory v1"
         with patch(
-            "tac_google.connectors.cx_agent_studio_connector.MemoryPromptBuilder.build",
+            "tac_google.connectors.cx_agent_studio.connector.MemoryPromptBuilder.build",
             return_value="memory v2",
         ):
             message, memory_to_commit = connector._maybe_tag_memory("turn 2", context, Mock())
@@ -70,7 +122,7 @@ class TestMaybeTagMemory:
         connector._last_injected_memory[context.conversation_id] = "user likes pizza"
         connector._handle_conversation_ended(context)
         with patch(
-            "tac_google.connectors.cx_agent_studio_connector.MemoryPromptBuilder.build",
+            "tac_google.connectors.cx_agent_studio.connector.MemoryPromptBuilder.build",
             return_value="user likes pizza",
         ):
             message, memory_to_commit = connector._maybe_tag_memory("turn 2", context, Mock())
@@ -164,7 +216,7 @@ class TestHandleMessageMemoryCommit:
         with (
             patch.object(connector, "_run_session", new=AsyncMock(return_value="reply")),
             patch(
-                "tac_google.connectors.cx_agent_studio_connector.MemoryPromptBuilder.build",
+                "tac_google.connectors.cx_agent_studio.connector.MemoryPromptBuilder.build",
                 return_value="user likes pizza",
             ),
         ):
@@ -184,7 +236,7 @@ class TestHandleMessageMemoryCommit:
                 connector, "_run_session", new=AsyncMock(side_effect=RuntimeError("boom"))
             ),
             patch(
-                "tac_google.connectors.cx_agent_studio_connector.MemoryPromptBuilder.build",
+                "tac_google.connectors.cx_agent_studio.connector.MemoryPromptBuilder.build",
                 return_value="user likes pizza",
             ),
         ):

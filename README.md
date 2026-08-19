@@ -36,7 +36,7 @@ Google Cloud-specific connectors for [Twilio Agent Connect (TAC)](https://github
 - **GCP Agent Platform Runtime** (Reasoning Engine) — two connectors, one per deployment type:
   - **`ADKAgentEngineConnector`** — Google ADK agents, session-based, streaming `async_stream_query()`
   - **`StudioAgentEngineConnector`** — Agent Studio apps, invoked over the `streamQuery` REST endpoint
-- **CX Agent Studio** (Customer Engagement Suite) via `CXAgentStudioConnector` — connect an agent built in the CX Agent Studio console; invoked over the CES text `runSession` API
+- **CX Agent Studio** (Customer Engagement Suite) via `CXAgentStudioConnector` — connect an agent built in the CX Agent Studio console; text/SMS + ConversationRelay voice invoke the text `runSession` API, or switch voice to native speech-to-speech over `BidiRunSession`
 - **Conversational Agents** (Dialogflow CX) via `ConversationalAgentsConnector` — connect an agent built in the Conversational Agents console; invoked over the Dialogflow CX `detectIntent` API (works for Playbook and Flow agents)
 
 ### Multi-Channel Communication
@@ -112,7 +112,8 @@ Full examples available in [`getting_started/examples/`](getting_started/example
 
 - **`agent_platform/adk_agent_engine.py`** - Connect Twilio to an ADK agent deployed on GCP Agent Platform Runtime
 - **`agent_platform/studio_agent_engine.py`** - Connect Twilio to an Agent Studio app deployed on GCP Agent Platform Runtime
-- **`cx_agent_studio.py`** - Connect Twilio to an agent built in CX Agent Studio (Customer Engagement Suite)
+- **`cx_agent_studio/cascaded.py`** - Connect Twilio to an agent built in CX Agent Studio (Customer Engagement Suite), text/SMS + ConversationRelay voice
+- **`cx_agent_studio/s2s.py`** - Same CX Agent Studio agent, but native speech-to-speech voice (Twilio Media Streams + `BidiRunSession`, no ConversationRelay)
 - **`conversational_agents.py`** - Connect Twilio to an agent built in Conversational Agents (Dialogflow CX)
 
 ## Deployment
@@ -128,7 +129,7 @@ See [`deploy/README.md`](deploy/README.md) for production deployment guides:
 
 ### Cloud Run (CX Agent Studio)
 - Build the **agent** in the CX Agent Studio console; deploy the **TAC server** to Cloud Run
-- Same Cloud Run + Secret Manager + `make` workflow, invoking the CES `runSession` API
+- Same Cloud Run + Secret Manager + `make` workflow; voice defaults to ConversationRelay (`runSession`) but can switch to native speech-to-speech (`BidiRunSession`)
 - See [`deploy/cx_agent_studio/`](deploy/cx_agent_studio/) for the setup guide
 
 ### Cloud Run (Conversational Agents)
@@ -178,7 +179,7 @@ twilio-agent-connect-google depends on:
   - Requires the `[server]` extra for TAC Server support
 - **google-cloud-aiplatform** - Vertex AI / Agent Platform Runtime (Reasoning Engine)
 - **google-adk** (optional) - Google Agent Development Kit, for ADK agents
-- **google-auth** - used by the CX Agent Studio connector to call the CES API (via the `cx-agent-studio` extra)
+- **google-auth**, **requests**, **websockets** - used by the CX Agent Studio connector to call the CX Agent Studio API (via the `cx-agent-studio` extra)
 
 ## Contributing
 

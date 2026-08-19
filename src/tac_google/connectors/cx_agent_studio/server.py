@@ -36,10 +36,10 @@ class CXAgentStudioFastAPIServer(TACFastAPIServer):
         voice_channel: Pass a `VoiceChannel` for ConversationRelay voice, a
             `VoiceS2SChannel` for native speech-to-speech voice, or None for
             no voice channel at all.
-        messaging_channels: Messaging channels (SMS, etc.), same as
-            `TACFastAPIServer` — except any `None` entries (e.g. an optional
-            channel a caller only conditionally built) are dropped with a
-            logged warning instead of being passed through.
+        messaging_channels: Messaging channels (SMS, etc.). Unlike
+            `TACFastAPIServer`, entries may be `None` (e.g. an optional
+            channel a caller only conditionally built) — they're dropped
+            with a logged warning instead of being passed through.
         config: `TACServerConfig`, same as `TACFastAPIServer`.
         app: Existing `FastAPI` app to register routes onto, same as
             `TACFastAPIServer`.
@@ -49,7 +49,7 @@ class CXAgentStudioFastAPIServer(TACFastAPIServer):
         self,
         tac: TAC,
         voice_channel: VoiceChannel | VoiceS2SChannel | None = None,
-        messaging_channels: list[MessagingChannel] | None = None,
+        messaging_channels: list[MessagingChannel | None] | None = None,
         config: TACServerConfig | None = None,
         app: FastAPI | None = None,
     ) -> None:
@@ -66,19 +66,20 @@ class CXAgentStudioFastAPIServer(TACFastAPIServer):
                 f"got {type(voice_channel).__name__}."
             )
 
+        filtered_messaging_channels: list[MessagingChannel] | None = None
         if messaging_channels is not None:
-            filtered = [c for c in messaging_channels if c is not None]
-            if len(filtered) != len(messaging_channels):
+            filtered_messaging_channels = [c for c in messaging_channels if c is not None]
+            dropped = len(messaging_channels) - len(filtered_messaging_channels)
+            if dropped:
                 logger.warning(
                     "messaging_channels contained None entries — ignoring them",
-                    dropped=len(messaging_channels) - len(filtered),
+                    dropped=dropped,
                 )
-            messaging_channels = filtered
 
         super().__init__(
             tac=tac,
             voice_channel=crelay_voice_channel,
-            messaging_channels=messaging_channels,
+            messaging_channels=filtered_messaging_channels,
             config=config,
             app=app,
         )

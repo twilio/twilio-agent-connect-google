@@ -6,6 +6,11 @@ Connect Twilio to GCP agents:
 - **CX Agent Studio** - Agents built in CX Agent Studio (Customer Engagement Suite)
 - **Conversational Agents** - Agents built in Conversational Agents (Dialogflow CX)
 
+Feature-focused examples (each builds on one of the connectors above to show a
+single feature in isolation):
+- **WhatsApp channel** ([`features/whatsapp.py`](features/whatsapp.py)) - enable
+  WhatsApp by passing `whatsapp_config`
+
 ---
 
 ## ADK Agent Engine Example
@@ -269,6 +274,56 @@ ngrok http 8000
 
 - Voice (phone number "A call comes in"): `https://your-domain.ngrok.io/twiml`
 - SMS (Conversation Orchestrator status callback): `https://your-domain.ngrok.io/webhook`
+
+---
+
+## WhatsApp Channel Example
+
+Same Conversational Agents agent as above, but with WhatsApp as the
+connector's only channel (no SMS, no Voice). Requires a Twilio number
+enabled for WhatsApp (Sandbox or a registered sender).
+
+### 1. Configure Environment
+
+Create `.env` file:
+
+```bash
+# Conversational Agents (Dialogflow CX)
+CONVERSATIONAL_AGENT_ID=projects/your-project/locations/us-central1/agents/your-agent-id
+DIALOGFLOW_LANGUAGE_CODE=en
+
+# Twilio
+TWILIO_ACCOUNT_SID=your_account_sid
+TWILIO_AUTH_TOKEN=your_auth_token
+TWILIO_API_KEY=your_api_key
+TWILIO_API_SECRET=your_api_secret
+TWILIO_PHONE_NUMBER=+1234567890
+TWILIO_WHATSAPP_NUMBER=whatsapp:+1234567890
+TWILIO_CONVERSATION_CONFIGURATION_ID=conv_config_xxx
+```
+
+### 2. Authenticate
+
+```bash
+gcloud auth application-default login
+```
+
+### 3. Run Server
+
+```bash
+python features/whatsapp.py
+```
+
+### 4. Expose with ngrok
+
+```bash
+ngrok http 8000
+```
+
+### 5. Configure Twilio Webhooks
+
+Point your WhatsApp sender's incoming-message webhook (Conversation
+Orchestrator status callback) at `https://your-domain.ngrok.io/webhook`.
 
 ---
 

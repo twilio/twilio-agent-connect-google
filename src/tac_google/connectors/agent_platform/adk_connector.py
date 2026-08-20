@@ -4,8 +4,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from tac.channels.chat import ChatChannelConfig
+from tac.channels.rcs import RCSChannelConfig
 from tac.channels.sms import SMSChannelConfig
 from tac.channels.voice import VoiceChannelConfig
+from tac.channels.whatsapp import WhatsAppChannelConfig
 from tac.core.tac import TAC
 from tac.models.session import ConversationSession
 from tac.models.tac import TACMemoryResponse
@@ -39,12 +42,14 @@ class ADKAgentEngineConnector(AgentEngineConnectorBase):
         tac: TAC instance for channel integration
         agent: Deployed ADK agent instance, from
             `vertexai.Client().agent_engines.get(name=...)`.
-        sms_config: Optional SMS channel configuration (SMSChannelConfig or dict)
-        voice_config: Optional Voice channel configuration (VoiceChannelConfig or dict)
+        sms_config, voice_config, rcs_config, whatsapp_config, chat_config: each
+            is a channel config or None (default) to disable that channel.
 
     Attributes:
-        voice: VoiceChannel instance for voice conversations
-        sms: SMSChannel instance for SMS conversations
+        voice, sms, rcs, whatsapp, chat: the corresponding channel instance,
+            or None if disabled.
+        messaging: All enabled messaging channels above, as a list — hand
+            this straight to a server's `messaging_channels=`.
 
     Example:
         ```python
@@ -65,7 +70,7 @@ class ADKAgentEngineConnector(AgentEngineConnectorBase):
         server = TACFastAPIServer(
             tac=tac,
             voice_channel=connector.voice,
-            sms_channel=connector.sms
+            messaging_channels=connector.messaging
         )
         server.start()
         ```
@@ -77,10 +82,20 @@ class ADKAgentEngineConnector(AgentEngineConnectorBase):
         agent: AgentEngine,
         sms_config: SMSChannelConfig | dict[str, Any] | None = None,
         voice_config: VoiceChannelConfig | dict[str, Any] | None = None,
+        rcs_config: RCSChannelConfig | dict[str, Any] | None = None,
+        whatsapp_config: WhatsAppChannelConfig | dict[str, Any] | None = None,
+        chat_config: ChatChannelConfig | dict[str, Any] | None = None,
     ) -> None:
         self.agent = agent
         self.adk_sessions_created: set[str] = set()
-        super().__init__(tac, sms_config, voice_config)
+        super().__init__(
+            tac,
+            sms_config,
+            voice_config,
+            rcs_config=rcs_config,
+            whatsapp_config=whatsapp_config,
+            chat_config=chat_config,
+        )
         self._sessions_url = f"{self._agent_engine_base_url(agent)}/sessions"
 
     async def _invoke_agent(

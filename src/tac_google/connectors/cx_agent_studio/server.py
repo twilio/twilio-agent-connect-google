@@ -13,7 +13,6 @@ from __future__ import annotations
 from fastapi import Depends, FastAPI, Response, WebSocket
 from tac.channels.messaging import MessagingChannel
 from tac.channels.voice import VoiceChannel
-from tac.core.logging import get_logger
 from tac.core.tac import TAC
 from tac.server import (
     FastAPIWebSocketAdapter,
@@ -25,8 +24,6 @@ from tac.server.fastapi_server import TACFastAPIServer
 
 from tac_google.connectors.cx_agent_studio.voice_s2s.channel import VoiceS2SChannel
 
-logger = get_logger(__name__)
-
 
 class CXAgentStudioFastAPIServer(TACFastAPIServer):
     """`TACFastAPIServer` plus support for native speech-to-speech voice.
@@ -36,10 +33,8 @@ class CXAgentStudioFastAPIServer(TACFastAPIServer):
         voice_channel: Pass a `VoiceChannel` for ConversationRelay voice, a
             `VoiceS2SChannel` for native speech-to-speech voice, or None for
             no voice channel at all.
-        messaging_channels: Messaging channels (SMS, etc.). Unlike
-            `TACFastAPIServer`, entries may be `None` (e.g. an optional
-            channel a caller only conditionally built) — they're dropped
-            with a logged warning instead of being passed through.
+        messaging_channels: Messaging channels (SMS, etc.), typically
+            `connector.messaging`.
         config: `TACServerConfig`, same as `TACFastAPIServer`.
         app: Existing `FastAPI` app to register routes onto, same as
             `TACFastAPIServer`.
@@ -49,7 +44,7 @@ class CXAgentStudioFastAPIServer(TACFastAPIServer):
         self,
         tac: TAC,
         voice_channel: VoiceChannel | VoiceS2SChannel | None = None,
-        messaging_channels: list[MessagingChannel | None] | None = None,
+        messaging_channels: list[MessagingChannel] | None = None,
         config: TACServerConfig | None = None,
         app: FastAPI | None = None,
     ) -> None:
@@ -66,20 +61,19 @@ class CXAgentStudioFastAPIServer(TACFastAPIServer):
                 f"got {type(voice_channel).__name__}."
             )
 
-        filtered_messaging_channels: list[MessagingChannel] | None = None
-        if messaging_channels is not None:
-            filtered_messaging_channels = [c for c in messaging_channels if c is not None]
-            dropped = len(messaging_channels) - len(filtered_messaging_channels)
-            if dropped:
-                logger.warning(
-                    "messaging_channels contained None entries — ignoring them",
-                    dropped=dropped,
+        for c in messaging_channels or []:
+            if not isinstance(c, MessagingChannel):
+                raise TypeError(
+                    "messaging_channels must contain MessagingChannel instances, got "
+                    f"{type(c).__name__}. If you're passing a connector's optional "
+                    "channel attribute (e.g. connector.rcs, connector.whatsapp), those "
+                    "are None when the channel isn't configured — filter them out."
                 )
 
         super().__init__(
             tac=tac,
             voice_channel=crelay_voice_channel,
-            messaging_channels=filtered_messaging_channels,
+            messaging_channels=messaging_channels,
             config=config,
             app=app,
         )

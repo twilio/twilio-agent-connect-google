@@ -16,6 +16,75 @@ def make_bare_base() -> AgentEngineConnectorBase:
     return base
 
 
+class TestChannelConstruction:
+    def test_sms_and_voice_omitted_when_configs_omitted(self):
+        with (
+            patch("tac_google.connectors.agent_platform._base.google.auth.default") as mock_auth,
+            patch("tac_google.connectors.agent_platform._base.AuthorizedSession"),
+            patch("tac_google.connectors._channels.SMSChannel") as mock_sms_channel,
+            patch("tac_google.connectors._channels.VoiceChannel") as mock_voice_channel,
+        ):
+            mock_auth.return_value = (Mock(), None)
+            base = AgentEngineConnectorBase(tac=Mock())
+
+        assert base.sms is None
+        assert base.voice is None
+        mock_sms_channel.assert_not_called()
+        mock_voice_channel.assert_not_called()
+
+    def test_sms_built_when_sms_config_given(self):
+        with (
+            patch("tac_google.connectors.agent_platform._base.google.auth.default") as mock_auth,
+            patch("tac_google.connectors.agent_platform._base.AuthorizedSession"),
+            patch("tac_google.connectors._channels.SMSChannel") as mock_sms_channel,
+        ):
+            mock_auth.return_value = (Mock(), None)
+            sms_config = Mock()
+            tac = Mock()
+            base = AgentEngineConnectorBase(tac=tac, sms_config=sms_config)
+
+        assert base.sms is mock_sms_channel.return_value
+        mock_sms_channel.assert_called_once_with(tac=tac, config=sms_config)
+
+    def test_voice_built_when_voice_config_given(self):
+        with (
+            patch("tac_google.connectors.agent_platform._base.google.auth.default") as mock_auth,
+            patch("tac_google.connectors.agent_platform._base.AuthorizedSession"),
+            patch("tac_google.connectors._channels.VoiceChannel") as mock_voice_channel,
+        ):
+            mock_auth.return_value = (Mock(), None)
+            voice_config = Mock()
+            tac = Mock()
+            base = AgentEngineConnectorBase(tac=tac, voice_config=voice_config)
+
+        assert base.voice is mock_voice_channel.return_value
+        mock_voice_channel.assert_called_once_with(tac=tac, config=voice_config)
+
+    def test_sms_omitted_when_sms_config_explicitly_none(self):
+        with (
+            patch("tac_google.connectors.agent_platform._base.google.auth.default") as mock_auth,
+            patch("tac_google.connectors.agent_platform._base.AuthorizedSession"),
+            patch("tac_google.connectors._channels.SMSChannel") as mock_sms_channel,
+        ):
+            mock_auth.return_value = (Mock(), None)
+            base = AgentEngineConnectorBase(tac=Mock(), sms_config=None)
+
+        assert base.sms is None
+        mock_sms_channel.assert_not_called()
+
+    def test_voice_omitted_when_voice_config_explicitly_none(self):
+        with (
+            patch("tac_google.connectors.agent_platform._base.google.auth.default") as mock_auth,
+            patch("tac_google.connectors.agent_platform._base.AuthorizedSession"),
+            patch("tac_google.connectors._channels.VoiceChannel") as mock_voice_channel,
+        ):
+            mock_auth.return_value = (Mock(), None)
+            base = AgentEngineConnectorBase(tac=Mock(), voice_config=None)
+
+        assert base.voice is None
+        mock_voice_channel.assert_not_called()
+
+
 class TestSanitizeSessionId:
     def test_replaces_underscores_with_hyphens(self):
         assert (

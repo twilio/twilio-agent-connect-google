@@ -10,12 +10,17 @@ import google.auth
 import google.oauth2.credentials
 from google.auth.transport.requests import AuthorizedSession
 from tac.adapters import MemoryPromptBuilder
-from tac.channels.sms import SMSChannel, SMSChannelConfig
-from tac.channels.voice import VoiceChannel, VoiceChannelConfig
+from tac.channels.chat import ChatChannelConfig
+from tac.channels.rcs import RCSChannelConfig
+from tac.channels.sms import SMSChannelConfig
+from tac.channels.voice import VoiceChannelConfig
+from tac.channels.whatsapp import WhatsAppChannelConfig
 from tac.core.logging import get_logger
 from tac.core.tac import TAC
 from tac.models.session import ConversationSession
 from tac.models.tac import TACMemoryResponse
+
+from tac_google.connectors._channels import ConnectorChannels
 
 logger = get_logger(__name__)
 
@@ -52,12 +57,14 @@ class ConversationalAgentsConnector:
         agent_id: The Dialogflow CX agent resource name, e.g.
             `projects/<project>/locations/<location>/agents/<agent-id>`.
         language_code: Language code for queries (default "en").
-        sms_config: Optional SMS channel configuration (SMSChannelConfig or dict).
-        voice_config: Optional Voice channel configuration (VoiceChannelConfig or dict).
+        sms_config, voice_config, rcs_config, whatsapp_config, chat_config: each
+            is a channel config or None (default) to disable that channel.
 
     Attributes:
-        voice: VoiceChannel instance for voice conversations.
-        sms: SMSChannel instance for SMS conversations.
+        voice, sms, rcs, whatsapp, chat: the corresponding channel instance,
+            or None if disabled.
+        messaging: All enabled messaging channels above, as a list — hand
+            this straight to a server's `messaging_channels=`.
     """
 
     def __init__(
@@ -67,6 +74,9 @@ class ConversationalAgentsConnector:
         language_code: str = "en",
         sms_config: SMSChannelConfig | dict[str, Any] | None = None,
         voice_config: VoiceChannelConfig | dict[str, Any] | None = None,
+        rcs_config: RCSChannelConfig | dict[str, Any] | None = None,
+        whatsapp_config: WhatsAppChannelConfig | dict[str, Any] | None = None,
+        chat_config: ChatChannelConfig | dict[str, Any] | None = None,
     ) -> None:
         self.tac = tac
         self.agent_id = agent_id.rstrip("/")
@@ -106,8 +116,20 @@ class ConversationalAgentsConnector:
             else {}
         )
 
-        self.voice = VoiceChannel(tac=tac, config=voice_config)
-        self.sms = SMSChannel(tac=tac, config=sms_config)
+        channels = ConnectorChannels(
+            tac,
+            voice_config=voice_config,
+            sms_config=sms_config,
+            rcs_config=rcs_config,
+            whatsapp_config=whatsapp_config,
+            chat_config=chat_config,
+        )
+        self.voice = channels.voice
+        self.sms = channels.sms
+        self.rcs = channels.rcs
+        self.whatsapp = channels.whatsapp
+        self.chat = channels.chat
+        self.messaging = channels.messaging
 
         self.tac.on_message_ready(self._handle_message)
         self.tac.on_conversation_ended(self._handle_conversation_ended)

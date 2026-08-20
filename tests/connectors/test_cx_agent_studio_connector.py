@@ -21,21 +21,21 @@ def make_context(conv_id: str = "conv-1") -> SimpleNamespace:
 
 
 class TestSmsChannelConstruction:
-    def test_sms_channel_built_by_default_when_sms_config_omitted(self):
+    def test_sms_channel_omitted_when_sms_config_omitted(self):
         with (
             patch(
                 "tac_google.connectors.cx_agent_studio.connector.google.auth.default"
             ) as mock_auth,
             patch("tac_google.connectors.cx_agent_studio.connector.AuthorizedSession"),
-            patch("tac_google.connectors.cx_agent_studio.connector.SMSChannel") as mock_sms_channel,
+            patch("tac_google.connectors._channels.SMSChannel") as mock_sms_channel,
         ):
             mock_auth.return_value = (Mock(), None)
-            tac = Mock()
-            connector = CXAgentStudioConnector(tac=tac, agent_id="projects/p/locations/us/apps/a")
+            connector = CXAgentStudioConnector(
+                tac=Mock(), agent_id="projects/p/locations/us/apps/a"
+            )
 
-        assert connector.sms is mock_sms_channel.return_value
-        mock_sms_channel.assert_called_once()
-        assert mock_sms_channel.call_args.kwargs["tac"] is tac
+        assert connector.sms is None
+        mock_sms_channel.assert_not_called()
 
     def test_sms_channel_omitted_when_sms_config_explicitly_none(self):
         with (
@@ -43,7 +43,7 @@ class TestSmsChannelConstruction:
                 "tac_google.connectors.cx_agent_studio.connector.google.auth.default"
             ) as mock_auth,
             patch("tac_google.connectors.cx_agent_studio.connector.AuthorizedSession"),
-            patch("tac_google.connectors.cx_agent_studio.connector.SMSChannel") as mock_sms_channel,
+            patch("tac_google.connectors._channels.SMSChannel") as mock_sms_channel,
         ):
             mock_auth.return_value = (Mock(), None)
             connector = CXAgentStudioConnector(
@@ -59,7 +59,7 @@ class TestSmsChannelConstruction:
                 "tac_google.connectors.cx_agent_studio.connector.google.auth.default"
             ) as mock_auth,
             patch("tac_google.connectors.cx_agent_studio.connector.AuthorizedSession"),
-            patch("tac_google.connectors.cx_agent_studio.connector.SMSChannel") as mock_sms_channel,
+            patch("tac_google.connectors._channels.SMSChannel") as mock_sms_channel,
         ):
             mock_auth.return_value = (Mock(), None)
             sms_config = Mock()

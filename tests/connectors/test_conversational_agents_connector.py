@@ -20,6 +20,103 @@ def make_context(conv_id: str = "conv-1") -> SimpleNamespace:
     return SimpleNamespace(conversation_id=conv_id, profile_id="user-1")
 
 
+class TestChannelConstruction:
+    def test_sms_and_voice_omitted_when_configs_omitted(self):
+        with (
+            patch(
+                "tac_google.connectors.conversational_agents_connector.google.auth.default"
+            ) as mock_auth,
+            patch("tac_google.connectors.conversational_agents_connector.AuthorizedSession"),
+            patch("tac_google.connectors._channels.SMSChannel") as mock_sms_channel,
+            patch("tac_google.connectors._channels.VoiceChannel") as mock_voice_channel,
+        ):
+            mock_auth.return_value = (Mock(), None)
+            connector = ConversationalAgentsConnector(
+                tac=Mock(), agent_id="projects/p/locations/us-central1/agents/a"
+            )
+
+        assert connector.sms is None
+        assert connector.voice is None
+        mock_sms_channel.assert_not_called()
+        mock_voice_channel.assert_not_called()
+
+    def test_sms_built_when_sms_config_given(self):
+        with (
+            patch(
+                "tac_google.connectors.conversational_agents_connector.google.auth.default"
+            ) as mock_auth,
+            patch("tac_google.connectors.conversational_agents_connector.AuthorizedSession"),
+            patch("tac_google.connectors._channels.SMSChannel") as mock_sms_channel,
+        ):
+            mock_auth.return_value = (Mock(), None)
+            sms_config = Mock()
+            tac = Mock()
+            connector = ConversationalAgentsConnector(
+                tac=tac,
+                agent_id="projects/p/locations/us-central1/agents/a",
+                sms_config=sms_config,
+            )
+
+        assert connector.sms is mock_sms_channel.return_value
+        mock_sms_channel.assert_called_once_with(tac=tac, config=sms_config)
+
+    def test_voice_built_when_voice_config_given(self):
+        with (
+            patch(
+                "tac_google.connectors.conversational_agents_connector.google.auth.default"
+            ) as mock_auth,
+            patch("tac_google.connectors.conversational_agents_connector.AuthorizedSession"),
+            patch("tac_google.connectors._channels.VoiceChannel") as mock_voice_channel,
+        ):
+            mock_auth.return_value = (Mock(), None)
+            voice_config = Mock()
+            tac = Mock()
+            connector = ConversationalAgentsConnector(
+                tac=tac,
+                agent_id="projects/p/locations/us-central1/agents/a",
+                voice_config=voice_config,
+            )
+
+        assert connector.voice is mock_voice_channel.return_value
+        mock_voice_channel.assert_called_once_with(tac=tac, config=voice_config)
+
+    def test_sms_omitted_when_sms_config_explicitly_none(self):
+        with (
+            patch(
+                "tac_google.connectors.conversational_agents_connector.google.auth.default"
+            ) as mock_auth,
+            patch("tac_google.connectors.conversational_agents_connector.AuthorizedSession"),
+            patch("tac_google.connectors._channels.SMSChannel") as mock_sms_channel,
+        ):
+            mock_auth.return_value = (Mock(), None)
+            connector = ConversationalAgentsConnector(
+                tac=Mock(),
+                agent_id="projects/p/locations/us-central1/agents/a",
+                sms_config=None,
+            )
+
+        assert connector.sms is None
+        mock_sms_channel.assert_not_called()
+
+    def test_voice_omitted_when_voice_config_explicitly_none(self):
+        with (
+            patch(
+                "tac_google.connectors.conversational_agents_connector.google.auth.default"
+            ) as mock_auth,
+            patch("tac_google.connectors.conversational_agents_connector.AuthorizedSession"),
+            patch("tac_google.connectors._channels.VoiceChannel") as mock_voice_channel,
+        ):
+            mock_auth.return_value = (Mock(), None)
+            connector = ConversationalAgentsConnector(
+                tac=Mock(),
+                agent_id="projects/p/locations/us-central1/agents/a",
+                voice_config=None,
+            )
+
+        assert connector.voice is None
+        mock_voice_channel.assert_not_called()
+
+
 class TestMaybeTagMemory:
     def test_no_memory_response_returns_message_unchanged(self):
         connector = make_bare_connector()

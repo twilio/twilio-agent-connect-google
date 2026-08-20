@@ -69,7 +69,7 @@ connector = StudioAgentEngineConnector(
 server = TACFastAPIServer(
     tac=tac,
     voice_channel=connector.voice,
-    messaging_channels=[connector.sms],
+    messaging_channels=connector.messaging,
 )
 
 if __name__ == "__main__":

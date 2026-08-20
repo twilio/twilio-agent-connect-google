@@ -1,15 +1,19 @@
-"""Example: Connect Twilio to an agent built in Conversational Agents (Dialogflow CX).
+"""Example: WhatsApp channel only.
 
 This example shows how to:
 1. Connect to an agent built in Conversational Agents (Dialogflow CX)
-2. Run a TAC FastAPI server that handles Twilio webhooks + ConversationRelay
-3. Let Dialogflow keep conversation history server-side (per session id)
+2. Enable WhatsApp as the connector's only messaging channel by passing
+   `whatsapp_config` and leaving `sms_config`/`voice_config` unset
 
-The connector talks to the agent over the Dialogflow CX detectIntent API —
-Twilio ConversationRelay handles speech, so only text is exchanged.
+WhatsApp works exactly like any other messaging channel from the connector's
+point of view — it's just opt-in via `whatsapp_config`. `connector.messaging`
+picks it up automatically, so the server wiring below is identical to any
+other example.
 
 Prerequisites:
     - An agent built in Conversational Agents (Dialogflow CX)
+    - A Twilio number enabled for WhatsApp (Twilio Sandbox or a registered
+      WhatsApp sender), in `whatsapp:+1234567890` format
     - Application Default Credentials with the Dialogflow API Client role
       (`gcloud auth application-default login`, or a Cloud Run service account
       with `roles/dialogflow.client`)
@@ -26,22 +30,21 @@ Environment Variables (in .env file):
     TWILIO_API_KEY=your_api_key
     TWILIO_API_SECRET=your_api_secret
     TWILIO_PHONE_NUMBER=+1234567890
+    TWILIO_WHATSAPP_NUMBER=whatsapp:+1234567890
     TWILIO_CONVERSATION_CONFIGURATION_ID=conv_configuration_xxx
-    TWILIO_VOICE_PUBLIC_DOMAIN=your-domain.ngrok.io
 
 Installation:
     pip install twilio-agent-connect-google[conversational-agents,server] python-dotenv
 
 Run:
-    python conversational_agents.py
+    python features/whatsapp.py
 """
 
 import os
 
 from dotenv import load_dotenv
 from tac import TAC, TACConfig
-from tac.channels.sms import SMSChannelConfig
-from tac.channels.voice import VoiceChannelConfig
+from tac.channels.whatsapp import WhatsAppChannelConfig
 from tac.server import TACFastAPIServer
 
 from tac_google.connectors import ConversationalAgentsConnector
@@ -57,13 +60,11 @@ connector = ConversationalAgentsConnector(
     tac=tac,
     agent_id=CONVERSATIONAL_AGENT_ID,
     language_code=DIALOGFLOW_LANGUAGE_CODE,
-    voice_config=VoiceChannelConfig(memory_mode="once"),
-    sms_config=SMSChannelConfig(memory_mode="once"),
+    whatsapp_config=WhatsAppChannelConfig(memory_mode="once"),
 )
 
 server = TACFastAPIServer(
     tac=tac,
-    voice_channel=connector.voice,
     messaging_channels=connector.messaging,
 )
 

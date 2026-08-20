@@ -6,6 +6,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
+from tac.channels.messaging import MessagingChannel
 from tac.channels.websocket_protocol import WebSocketDisconnectError
 from tac.core.logging import get_logger
 
@@ -281,15 +282,24 @@ class TestCXAgentStudioFastAPIServerVoiceDispatch:
         assert server.voice_s2s_channel is s2s_channel
         assert captured["voice_channel"] is None
 
-    def test_none_entries_in_messaging_channels_are_dropped(self, monkeypatch):
+    def test_none_entries_in_messaging_channels_raise(self, monkeypatch):
+        def fake_super_init(self, *, tac, voice_channel, messaging_channels, config, app):
+            raise AssertionError("super().__init__ should not be reached")
+
+        monkeypatch.setattr("tac.server.fastapi_server.TACFastAPIServer.__init__", fake_super_init)
+        real_channel = Mock(spec=MessagingChannel)
+        with pytest.raises(TypeError, match="messaging_channels"):
+            CXAgentStudioFastAPIServer(tac=Mock(), messaging_channels=[real_channel, None])
+
+    def test_messaging_channels_with_no_none_entries_passes_through(self, monkeypatch):
         captured = {}
 
         def fake_super_init(self, *, tac, voice_channel, messaging_channels, config, app):
             captured["messaging_channels"] = messaging_channels
 
         monkeypatch.setattr("tac.server.fastapi_server.TACFastAPIServer.__init__", fake_super_init)
-        real_channel = Mock()
-        CXAgentStudioFastAPIServer(tac=Mock(), messaging_channels=[real_channel, None])
+        real_channel = Mock(spec=MessagingChannel)
+        CXAgentStudioFastAPIServer(tac=Mock(), messaging_channels=[real_channel])
 
         assert captured["messaging_channels"] == [real_channel]
 

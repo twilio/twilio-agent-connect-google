@@ -55,12 +55,10 @@ connector = CXAgentStudioConnector(
     sms_config=SMSChannelConfig(memory_mode="once"),
 )
 
-messaging_channels = [connector.sms, connector.chat, connector.rcs, connector.whatsapp]
-
 server = CXAgentStudioFastAPIServer(
     tac=tac,
     voice_channel=connector.voice_s2s,
-    messaging_channels=[c for c in messaging_channels if c is not None],
+    messaging_channels=[connector.sms],
 )
 
 if __name__ == "__main__":

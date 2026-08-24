@@ -70,14 +70,10 @@ class ADKAgentEngineConnector(AgentEngineConnectorBase):
 
         connector = ADKAgentEngineConnector(tac=tac, agent=agent)
 
-        # RCS/WhatsApp are None when their Twilio resource isn't configured —
-        # filter them out before handing the list to the server.
-        messaging_channels = [connector.sms, connector.chat, connector.rcs, connector.whatsapp]
-
         server = TACFastAPIServer(
             tac=tac,
             voice_channel=connector.voice,
-            messaging_channels=[c for c in messaging_channels if c is not None],
+            messaging_channels=[connector.sms],
         )
         server.start()
         ```

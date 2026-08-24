@@ -116,7 +116,7 @@ Full examples available in [`getting_started/examples/`](getting_started/example
 
 - **`agent_platform/adk_agent_engine.py`** - Connect Twilio to an ADK agent deployed on GCP Agent Platform Runtime
 - **`agent_platform/studio_agent_engine.py`** - Connect Twilio to an Agent Studio app deployed on GCP Agent Platform Runtime
-- **`cx_agent_studio/cascaded.py`** - Connect Twilio to an agent built in CX Agent Studio (Customer Engagement Suite), messaging channels + ConversationRelay voice
+- **`cx_agent_studio/cascaded.py`** - Connect Twilio to an agent built in CX Agent Studio (Customer Engagement Suite), text/SMS + ConversationRelay voice
 - **`cx_agent_studio/s2s.py`** - Same CX Agent Studio agent, but native speech-to-speech voice (Twilio Media Streams + `BidiRunSession`, no ConversationRelay)
 - **`conversational_agents.py`** - Connect Twilio to an agent built in Conversational Agents (Dialogflow CX)
 - **`features/whatsapp.py`**, **`features/rcs.py`** - Enable a single messaging channel (WhatsApp or RCS) on its own

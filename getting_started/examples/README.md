@@ -9,7 +9,9 @@ Connect Twilio to GCP agents:
 Feature-focused examples (each builds on one of the connectors above to show a
 single feature in isolation):
 - **WhatsApp channel** ([`features/whatsapp.py`](features/whatsapp.py)) - enable
-  WhatsApp by passing `whatsapp_config`
+  WhatsApp by setting `TWILIO_WHATSAPP_NUMBER`
+- **RCS channel** ([`features/rcs.py`](features/rcs.py)) - enable RCS by
+  setting `TWILIO_RCS_SENDER_ID`
 
 ---
 
@@ -279,9 +281,10 @@ ngrok http 8000
 
 ## WhatsApp Channel Example
 
-Same Conversational Agents agent as above, but with WhatsApp as the
-connector's only channel (no SMS, no Voice). Requires a Twilio number
-enabled for WhatsApp (Sandbox or a registered sender).
+Same Conversational Agents agent as above, but only WhatsApp is wired to
+the server (the connector still builds SMS/Voice/Chat, they're just not
+passed in). Requires a Twilio number enabled for WhatsApp (Sandbox or a
+registered sender).
 
 ### 1. Configure Environment
 
@@ -324,6 +327,41 @@ ngrok http 8000
 
 Point your WhatsApp sender's incoming-message webhook (Conversation
 Orchestrator status callback) at `https://your-domain.ngrok.io/webhook`.
+
+---
+
+## RCS Channel Example
+
+Same as the WhatsApp example above, but with RCS instead. Requires a Twilio
+RCS sender configured for your account.
+
+### 1. Configure Environment
+
+Same `.env` as the WhatsApp example, but with `TWILIO_RCS_SENDER_ID` instead
+of `TWILIO_WHATSAPP_NUMBER`.
+
+### 2. Authenticate
+
+```bash
+gcloud auth application-default login
+```
+
+### 3. Run Server
+
+```bash
+python features/rcs.py
+```
+
+### 4. Expose with ngrok
+
+```bash
+ngrok http 8000
+```
+
+### 5. Configure Twilio Webhooks
+
+Point your RCS sender's incoming-message webhook (Conversation Orchestrator
+status callback) at `https://your-domain.ngrok.io/webhook`.
 
 ---
 

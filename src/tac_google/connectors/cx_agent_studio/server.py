@@ -33,8 +33,8 @@ class CXAgentStudioFastAPIServer(TACFastAPIServer):
         voice_channel: Pass a `VoiceChannel` for ConversationRelay voice, a
             `VoiceS2SChannel` for native speech-to-speech voice, or None for
             no voice channel at all.
-        messaging_channels: Messaging channels (SMS, etc.), typically
-            `connector.messaging`.
+        messaging_channels: Messaging channels (SMS, etc.), e.g.
+            `[connector.sms, connector.chat]`.
         config: `TACServerConfig`, same as `TACFastAPIServer`.
         app: Existing `FastAPI` app to register routes onto, same as
             `TACFastAPIServer`.

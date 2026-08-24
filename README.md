@@ -36,11 +36,11 @@ Google Cloud-specific connectors for [Twilio Agent Connect (TAC)](https://github
 - **GCP Agent Platform Runtime** (Reasoning Engine) — two connectors, one per deployment type:
   - **`ADKAgentEngineConnector`** — Google ADK agents, session-based, streaming `async_stream_query()`
   - **`StudioAgentEngineConnector`** — Agent Studio apps, invoked over the `streamQuery` REST endpoint
-- **CX Agent Studio** (Customer Engagement Suite) via `CXAgentStudioConnector` — connect an agent built in the CX Agent Studio console; text/SMS + ConversationRelay voice invoke the text `runSession` API, or switch voice to native speech-to-speech over `BidiRunSession`
+- **CX Agent Studio** (Customer Engagement Suite) via `CXAgentStudioConnector` — connect an agent built in the CX Agent Studio console; SMS/RCS/WhatsApp/Chat + ConversationRelay voice invoke the text `runSession` API, or switch voice to native speech-to-speech over `BidiRunSession`
 - **Conversational Agents** (Dialogflow CX) via `ConversationalAgentsConnector` — connect an agent built in the Conversational Agents console; invoked over the Dialogflow CX `detectIntent` API (works for Playbook and Flow agents)
 
 ### Multi-Channel Communication
-- **Voice and SMS support** - Single codebase handles both phone calls and text messages
+- **Voice, SMS, RCS, WhatsApp, and Chat support** - Single codebase handles phone calls and every messaging channel; SMS/Voice/Chat are always available, RCS/WhatsApp activate automatically once their Twilio resource (`TWILIO_RCS_SENDER_ID` / `TWILIO_WHATSAPP_NUMBER`) is configured
 - **Automatic conversation routing** - Messages route to the correct agent instance per conversation
 - **Memory injection** - Customer history and preferences automatically included in agent context
 
@@ -102,6 +102,10 @@ TWILIO_API_SECRET=your_api_secret    # Secret for API key
 TWILIO_PHONE_NUMBER=+1234567890
 TWILIO_CONVERSATION_CONFIGURATION_ID=conv_configuration_xxx
 
+# Optional: enables RCS / WhatsApp
+# TWILIO_RCS_SENDER_ID=rcs_sender_xxxxxxxxxxxxxxxxxx
+# TWILIO_WHATSAPP_NUMBER=whatsapp:+1234567890
+
 # Server Configuration (for Voice)
 TWILIO_VOICE_PUBLIC_DOMAIN=your-domain.ngrok.io
 ```
@@ -112,9 +116,10 @@ Full examples available in [`getting_started/examples/`](getting_started/example
 
 - **`agent_platform/adk_agent_engine.py`** - Connect Twilio to an ADK agent deployed on GCP Agent Platform Runtime
 - **`agent_platform/studio_agent_engine.py`** - Connect Twilio to an Agent Studio app deployed on GCP Agent Platform Runtime
-- **`cx_agent_studio/cascaded.py`** - Connect Twilio to an agent built in CX Agent Studio (Customer Engagement Suite), text/SMS + ConversationRelay voice
+- **`cx_agent_studio/cascaded.py`** - Connect Twilio to an agent built in CX Agent Studio (Customer Engagement Suite), messaging channels + ConversationRelay voice
 - **`cx_agent_studio/s2s.py`** - Same CX Agent Studio agent, but native speech-to-speech voice (Twilio Media Streams + `BidiRunSession`, no ConversationRelay)
 - **`conversational_agents.py`** - Connect Twilio to an agent built in Conversational Agents (Dialogflow CX)
+- **`features/whatsapp.py`**, **`features/rcs.py`** - Enable a single messaging channel (WhatsApp or RCS) on its own
 
 ## Deployment
 

@@ -50,14 +50,17 @@ class StudioAgentEngineConnector(AgentEngineConnectorBase):
         tac: TAC instance for channel integration
         agent: Deployed Studio agent instance, from
             `vertexai.Client().agent_engines.get(name=...)`.
-        sms_config, voice_config, rcs_config, whatsapp_config, chat_config: each
-            is a channel config or None (default) to disable that channel.
+        sms_config, voice_config, chat_config: each is a channel config; the
+            channel is always built.
+        rcs_config, whatsapp_config: channel config — tuning only. The
+            channel is built whenever its Twilio resource is configured
+            (TWILIO_RCS_SENDER_ID / TWILIO_WHATSAPP_NUMBER), regardless of
+            this argument.
 
     Attributes:
-        voice, sms, rcs, whatsapp, chat: the corresponding channel instance,
-            or None if disabled.
-        messaging: All enabled messaging channels above, as a list — hand
-            this straight to a server's `messaging_channels=`.
+        voice, sms, chat: the corresponding channel instance.
+        rcs, whatsapp: the corresponding channel instance, or None if its
+            Twilio resource isn't configured.
 
     Example:
         ```python
@@ -75,10 +78,14 @@ class StudioAgentEngineConnector(AgentEngineConnectorBase):
 
         connector = StudioAgentEngineConnector(tac=tac, agent=agent)
 
+        # RCS/WhatsApp are None when their Twilio resource isn't configured —
+        # filter them out before handing the list to the server.
+        messaging_channels = [connector.sms, connector.chat, connector.rcs, connector.whatsapp]
+
         server = TACFastAPIServer(
             tac=tac,
             voice_channel=connector.voice,
-            messaging_channels=connector.messaging
+            messaging_channels=[c for c in messaging_channels if c is not None],
         )
         server.start()
         ```

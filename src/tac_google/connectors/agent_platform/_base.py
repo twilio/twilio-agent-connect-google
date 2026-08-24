@@ -12,7 +12,7 @@ from tac.adapters import MemoryPromptBuilder
 from tac.channels.chat import ChatChannelConfig
 from tac.channels.rcs import RCSChannelConfig
 from tac.channels.sms import SMSChannelConfig
-from tac.channels.voice import VoiceChannelConfig
+from tac.channels.voice import VoiceChannel, VoiceChannelConfig
 from tac.channels.whatsapp import WhatsAppChannelConfig
 from tac.core.logging import get_logger
 from tac.core.tac import TAC
@@ -34,16 +34,17 @@ class AgentEngineConnectorBase:
     invocation contract, and may override `_handle_conversation_ended` to
     clean up any per-conversation state they keep.
 
-    Each `*_config` arg (SMS/Voice/RCS/WhatsApp/Chat) is opt-in: None
-    (the default) means no channel; pass a config to enable it.
+    SMS, Voice, and Chat are always built. RCS and WhatsApp are built only
+    when their Twilio resource is configured (TWILIO_RCS_SENDER_ID /
+    TWILIO_WHATSAPP_NUMBER) — see `ConnectorChannels`.
 
     Args:
         tac: TAC instance for channel integration.
-        sms_config: SMSChannelConfig or dict, or None to disable SMS.
-        voice_config: VoiceChannelConfig or dict, or None to disable Voice.
-        rcs_config: RCSChannelConfig or dict, or None to disable RCS.
-        whatsapp_config: WhatsAppChannelConfig or dict, or None to disable WhatsApp.
-        chat_config: ChatChannelConfig or dict, or None to disable Chat.
+        sms_config: SMSChannelConfig or dict.
+        voice_config: VoiceChannelConfig or dict.
+        rcs_config: RCSChannelConfig or dict — tuning only.
+        whatsapp_config: WhatsAppChannelConfig or dict — tuning only.
+        chat_config: ChatChannelConfig or dict.
     """
 
     def __init__(
@@ -56,20 +57,18 @@ class AgentEngineConnectorBase:
         chat_config: ChatChannelConfig | dict[str, Any] | None = None,
     ) -> None:
         self.tac = tac
+        self.voice = VoiceChannel(tac=tac, config=voice_config)
         channels = ConnectorChannels(
             tac,
-            voice_config=voice_config,
             sms_config=sms_config,
+            chat_config=chat_config,
             rcs_config=rcs_config,
             whatsapp_config=whatsapp_config,
-            chat_config=chat_config,
         )
-        self.voice = channels.voice
         self.sms = channels.sms
         self.rcs = channels.rcs
         self.whatsapp = channels.whatsapp
         self.chat = channels.chat
-        self.messaging = channels.messaging
 
         self._last_injected_memory: dict[str, str] = {}
         creds, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])

@@ -13,7 +13,7 @@ from tac.adapters import MemoryPromptBuilder
 from tac.channels.chat import ChatChannelConfig
 from tac.channels.rcs import RCSChannelConfig
 from tac.channels.sms import SMSChannelConfig
-from tac.channels.voice import VoiceChannelConfig
+from tac.channels.voice import VoiceChannel, VoiceChannelConfig
 from tac.channels.whatsapp import WhatsAppChannelConfig
 from tac.core.logging import get_logger
 from tac.core.tac import TAC
@@ -57,14 +57,17 @@ class ConversationalAgentsConnector:
         agent_id: The Dialogflow CX agent resource name, e.g.
             `projects/<project>/locations/<location>/agents/<agent-id>`.
         language_code: Language code for queries (default "en").
-        sms_config, voice_config, rcs_config, whatsapp_config, chat_config: each
-            is a channel config or None (default) to disable that channel.
+        sms_config, voice_config, chat_config: each is a channel config; the
+            channel is always built.
+        rcs_config, whatsapp_config: channel config — tuning only. The
+            channel is built whenever its Twilio resource is configured
+            (TWILIO_RCS_SENDER_ID / TWILIO_WHATSAPP_NUMBER), regardless of
+            this argument.
 
     Attributes:
-        voice, sms, rcs, whatsapp, chat: the corresponding channel instance,
-            or None if disabled.
-        messaging: All enabled messaging channels above, as a list — hand
-            this straight to a server's `messaging_channels=`.
+        voice, sms, chat: the corresponding channel instance.
+        rcs, whatsapp: the corresponding channel instance, or None if its
+            Twilio resource isn't configured.
     """
 
     def __init__(
@@ -116,20 +119,18 @@ class ConversationalAgentsConnector:
             else {}
         )
 
+        self.voice = VoiceChannel(tac=tac, config=voice_config)
         channels = ConnectorChannels(
             tac,
-            voice_config=voice_config,
             sms_config=sms_config,
+            chat_config=chat_config,
             rcs_config=rcs_config,
             whatsapp_config=whatsapp_config,
-            chat_config=chat_config,
         )
-        self.voice = channels.voice
         self.sms = channels.sms
         self.rcs = channels.rcs
         self.whatsapp = channels.whatsapp
         self.chat = channels.chat
-        self.messaging = channels.messaging
 
         self.tac.on_message_ready(self._handle_message)
         self.tac.on_conversation_ended(self._handle_conversation_ended)

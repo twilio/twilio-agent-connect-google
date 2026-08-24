@@ -48,7 +48,7 @@ connector = CXAgentStudioConnector(
 server = CXAgentStudioFastAPIServer(
     tac=tac,
     voice_channel=connector.voice,
-    messaging_channels=connector.messaging,
+    messaging_channels=[connector.sms],
 )
 
 if __name__ == "__main__":

@@ -16,73 +16,74 @@ def make_bare_base() -> AgentEngineConnectorBase:
     return base
 
 
+def make_tac_for_channels() -> Mock:
+    """A Mock TAC whose config reports no RCS/WhatsApp resource configured —
+    plain Mock() attribute access is truthy, which would otherwise make
+    tac.config.rcs_sender_id/whatsapp_number look "configured" by accident.
+    """
+    tac = Mock()
+    tac.config = Mock(rcs_sender_id=None, whatsapp_number=None)
+    return tac
+
+
 class TestChannelConstruction:
-    def test_sms_and_voice_omitted_when_configs_omitted(self):
+    def test_sms_voice_chat_always_built(self):
         with (
             patch("tac_google.connectors.agent_platform._base.google.auth.default") as mock_auth,
             patch("tac_google.connectors.agent_platform._base.AuthorizedSession"),
+            patch("tac_google.connectors.agent_platform._base.VoiceChannel") as mock_voice_channel,
             patch("tac_google.connectors._channels.SMSChannel") as mock_sms_channel,
-            patch("tac_google.connectors._channels.VoiceChannel") as mock_voice_channel,
+            patch("tac_google.connectors._channels.ChatChannel") as mock_chat_channel,
         ):
             mock_auth.return_value = (Mock(), None)
-            base = AgentEngineConnectorBase(tac=Mock())
-
-        assert base.sms is None
-        assert base.voice is None
-        mock_sms_channel.assert_not_called()
-        mock_voice_channel.assert_not_called()
-
-    def test_sms_built_when_sms_config_given(self):
-        with (
-            patch("tac_google.connectors.agent_platform._base.google.auth.default") as mock_auth,
-            patch("tac_google.connectors.agent_platform._base.AuthorizedSession"),
-            patch("tac_google.connectors._channels.SMSChannel") as mock_sms_channel,
-        ):
-            mock_auth.return_value = (Mock(), None)
-            sms_config = Mock()
-            tac = Mock()
-            base = AgentEngineConnectorBase(tac=tac, sms_config=sms_config)
-
-        assert base.sms is mock_sms_channel.return_value
-        mock_sms_channel.assert_called_once_with(tac=tac, config=sms_config)
-
-    def test_voice_built_when_voice_config_given(self):
-        with (
-            patch("tac_google.connectors.agent_platform._base.google.auth.default") as mock_auth,
-            patch("tac_google.connectors.agent_platform._base.AuthorizedSession"),
-            patch("tac_google.connectors._channels.VoiceChannel") as mock_voice_channel,
-        ):
-            mock_auth.return_value = (Mock(), None)
-            voice_config = Mock()
-            tac = Mock()
-            base = AgentEngineConnectorBase(tac=tac, voice_config=voice_config)
+            base = AgentEngineConnectorBase(tac=make_tac_for_channels())
 
         assert base.voice is mock_voice_channel.return_value
-        mock_voice_channel.assert_called_once_with(tac=tac, config=voice_config)
+        assert base.sms is mock_sms_channel.return_value
+        assert base.chat is mock_chat_channel.return_value
 
-    def test_sms_omitted_when_sms_config_explicitly_none(self):
+    def test_rcs_and_whatsapp_none_when_resource_not_configured(self):
         with (
             patch("tac_google.connectors.agent_platform._base.google.auth.default") as mock_auth,
             patch("tac_google.connectors.agent_platform._base.AuthorizedSession"),
-            patch("tac_google.connectors._channels.SMSChannel") as mock_sms_channel,
+            patch("tac_google.connectors._channels.RCSChannel") as mock_rcs_channel,
+            patch("tac_google.connectors._channels.WhatsAppChannel") as mock_whatsapp_channel,
         ):
             mock_auth.return_value = (Mock(), None)
-            base = AgentEngineConnectorBase(tac=Mock(), sms_config=None)
+            base = AgentEngineConnectorBase(tac=make_tac_for_channels())
 
-        assert base.sms is None
-        mock_sms_channel.assert_not_called()
+        assert base.rcs is None
+        assert base.whatsapp is None
+        mock_rcs_channel.assert_not_called()
+        mock_whatsapp_channel.assert_not_called()
 
-    def test_voice_omitted_when_voice_config_explicitly_none(self):
+    def test_rcs_built_when_rcs_sender_id_configured(self):
         with (
             patch("tac_google.connectors.agent_platform._base.google.auth.default") as mock_auth,
             patch("tac_google.connectors.agent_platform._base.AuthorizedSession"),
-            patch("tac_google.connectors._channels.VoiceChannel") as mock_voice_channel,
+            patch("tac_google.connectors._channels.RCSChannel") as mock_rcs_channel,
         ):
             mock_auth.return_value = (Mock(), None)
-            base = AgentEngineConnectorBase(tac=Mock(), voice_config=None)
+            tac = make_tac_for_channels()
+            tac.config.rcs_sender_id = "rcs_sender_123"
+            base = AgentEngineConnectorBase(tac=tac)
 
-        assert base.voice is None
-        mock_voice_channel.assert_not_called()
+        assert base.rcs is mock_rcs_channel.return_value
+        mock_rcs_channel.assert_called_once_with(tac=tac, config=None)
+
+    def test_whatsapp_built_when_whatsapp_number_configured(self):
+        with (
+            patch("tac_google.connectors.agent_platform._base.google.auth.default") as mock_auth,
+            patch("tac_google.connectors.agent_platform._base.AuthorizedSession"),
+            patch("tac_google.connectors._channels.WhatsAppChannel") as mock_whatsapp_channel,
+        ):
+            mock_auth.return_value = (Mock(), None)
+            tac = make_tac_for_channels()
+            tac.config.whatsapp_number = "whatsapp:+15550001234"
+            base = AgentEngineConnectorBase(tac=tac)
+
+        assert base.whatsapp is mock_whatsapp_channel.return_value
+        mock_whatsapp_channel.assert_called_once_with(tac=tac, config=None)
 
 
 class TestSanitizeSessionId:

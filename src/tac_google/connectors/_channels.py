@@ -1,14 +1,18 @@
-"""Shared channel-building logic for connectors (follows tac_aws's
-`ConnectorChannels` shape).
+"""Shared channel-building logic for connectors, following tac_microsoft's
+`AgentFrameworkConnector` design.
 
-Every channel is opt-in: None (default) means no channel, any config builds
-it. RCSChannel/WhatsAppChannel still require their Twilio resource
-(TWILIO_RCS_SENDER_ID / TWILIO_WHATSAPP_NUMBER) and raise ValueError at
-construction if it's missing.
+SMS and Chat are always built — same as Voice, which every connector builds
+itself (see below) — since disabling a channel means not wiring it to a
+server, not skipping its construction. RCS and WhatsApp are the exception:
+they're built only when their Twilio resource is configured
+(`TWILIO_RCS_SENDER_ID` / `TWILIO_WHATSAPP_NUMBER`), since `RCSChannel` /
+`WhatsAppChannel` themselves require it and raise ValueError at construction
+if it's missing. Their `*_config` args are tuning only (memory_mode, etc.)
+and have no effect if the resource isn't configured.
 
-CXAgentStudioConnector builds Voice itself instead of through this class,
-since it must pick between VoiceChannel and VoiceS2SChannel based on the
-config type.
+Voice isn't included here: `CXAgentStudioConnector` must pick between
+`VoiceChannel` and `VoiceS2SChannel` based on the config type, so every
+connector builds Voice itself instead of through this class.
 """
 
 from __future__ import annotations
@@ -16,10 +20,8 @@ from __future__ import annotations
 from typing import Any
 
 from tac.channels.chat import ChatChannel, ChatChannelConfig
-from tac.channels.messaging import MessagingChannel
 from tac.channels.rcs import RCSChannel, RCSChannelConfig
 from tac.channels.sms import SMSChannel, SMSChannelConfig
-from tac.channels.voice import VoiceChannel, VoiceChannelConfig
 from tac.channels.whatsapp import WhatsAppChannel, WhatsAppChannelConfig
 from tac.core.tac import TAC
 
@@ -27,42 +29,38 @@ __all__ = ["ConnectorChannels"]
 
 
 class ConnectorChannels:
-    """Builds a connector's channels and collects the messaging ones.
+    """Builds a connector's SMS/Chat/RCS/WhatsApp channels.
 
     Args:
         tac: TAC instance for channel integration.
-        voice_config, sms_config, rcs_config, whatsapp_config, chat_config:
-            each is a channel config or None (default) to disable that
-            channel.
+        sms_config: SMSChannelConfig or dict. SMS is always built.
+        chat_config: ChatChannelConfig or dict. Chat is always built.
+        rcs_config: RCSChannelConfig or dict — tuning only. RCS is built
+            whenever TWILIO_RCS_SENDER_ID is configured, regardless of
+            this argument.
+        whatsapp_config: WhatsAppChannelConfig or dict — tuning only.
+            WhatsApp is built whenever TWILIO_WHATSAPP_NUMBER is
+            configured, regardless of this argument.
 
     Attributes:
-        voice, sms, rcs, whatsapp, chat: the corresponding channel instance,
-            or None if disabled.
-        messaging: sms/rcs/whatsapp/chat, whichever are enabled, as a list —
-            hand this straight to a server's `messaging_channels=`.
+        sms: SMSChannel instance.
+        chat: ChatChannel instance.
+        rcs: RCSChannel instance, or None if TWILIO_RCS_SENDER_ID isn't configured.
+        whatsapp: WhatsAppChannel instance, or None if TWILIO_WHATSAPP_NUMBER
+            isn't configured.
     """
 
     def __init__(
         self,
         tac: TAC,
-        voice_config: VoiceChannelConfig | dict[str, Any] | None = None,
         sms_config: SMSChannelConfig | dict[str, Any] | None = None,
+        chat_config: ChatChannelConfig | dict[str, Any] | None = None,
         rcs_config: RCSChannelConfig | dict[str, Any] | None = None,
         whatsapp_config: WhatsAppChannelConfig | dict[str, Any] | None = None,
-        chat_config: ChatChannelConfig | dict[str, Any] | None = None,
     ) -> None:
-        self.voice = (
-            VoiceChannel(tac=tac, config=voice_config) if voice_config is not None else None
-        )
-        self.sms = SMSChannel(tac=tac, config=sms_config) if sms_config is not None else None
-        self.rcs = RCSChannel(tac=tac, config=rcs_config) if rcs_config is not None else None
+        self.sms = SMSChannel(tac=tac, config=sms_config)
+        self.chat = ChatChannel(tac=tac, config=chat_config)
+        self.rcs = RCSChannel(tac=tac, config=rcs_config) if tac.config.rcs_sender_id else None
         self.whatsapp = (
-            WhatsAppChannel(tac=tac, config=whatsapp_config)
-            if whatsapp_config is not None
-            else None
+            WhatsAppChannel(tac=tac, config=whatsapp_config) if tac.config.whatsapp_number else None
         )
-        self.chat = ChatChannel(tac=tac, config=chat_config) if chat_config is not None else None
-
-        self.messaging: list[MessagingChannel] = [
-            c for c in (self.sms, self.rcs, self.whatsapp, self.chat) if c is not None
-        ]

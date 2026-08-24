@@ -1,13 +1,12 @@
-"""Example: WhatsApp channel only.
+"""Example: RCS channel only.
 
-Sets TWILIO_WHATSAPP_NUMBER to enable `connector.whatsapp`, then wires only
-that channel to the server (the connector also builds SMS/Voice/Chat, they're
+Sets TWILIO_RCS_SENDER_ID to enable `connector.rcs`, then wires only that
+channel to the server (the connector also builds SMS/Voice/Chat, they're
 just not passed in).
 
 Prerequisites:
     - An agent built in Conversational Agents (Dialogflow CX)
-    - A Twilio number enabled for WhatsApp (Sandbox or a registered sender),
-      in `whatsapp:+1234567890` format
+    - A Twilio RCS sender configured for your account
     - Application Default Credentials with the Dialogflow API Client role
       (`gcloud auth application-default login`, or a Cloud Run service account
       with `roles/dialogflow.client`)
@@ -24,21 +23,21 @@ Environment Variables (in .env file):
     TWILIO_API_KEY=your_api_key
     TWILIO_API_SECRET=your_api_secret
     TWILIO_PHONE_NUMBER=+1234567890
-    TWILIO_WHATSAPP_NUMBER=whatsapp:+1234567890
+    TWILIO_RCS_SENDER_ID=rcs_sender_xxxxxxxxxxxxxxxxxx
     TWILIO_CONVERSATION_CONFIGURATION_ID=conv_configuration_xxx
 
 Installation:
     pip install twilio-agent-connect-google[conversational-agents,server] python-dotenv
 
 Run:
-    python features/whatsapp.py
+    python features/rcs.py
 """
 
 import os
 
 from dotenv import load_dotenv
 from tac import TAC, TACConfig
-from tac.channels.whatsapp import WhatsAppChannelConfig
+from tac.channels.rcs import RCSChannelConfig
 from tac.server import TACFastAPIServer
 
 from tac_google.connectors import ConversationalAgentsConnector
@@ -54,12 +53,12 @@ connector = ConversationalAgentsConnector(
     tac=tac,
     agent_id=CONVERSATIONAL_AGENT_ID,
     language_code=DIALOGFLOW_LANGUAGE_CODE,
-    whatsapp_config=WhatsAppChannelConfig(memory_mode="once"),
+    rcs_config=RCSChannelConfig(memory_mode="once"),
 )
 
 server = TACFastAPIServer(
     tac=tac,
-    messaging_channels=[c for c in [connector.whatsapp] if c is not None],
+    messaging_channels=[c for c in [connector.rcs] if c is not None],
 )
 
 if __name__ == "__main__":

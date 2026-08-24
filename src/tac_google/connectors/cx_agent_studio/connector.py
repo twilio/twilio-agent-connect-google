@@ -58,8 +58,12 @@ class CXAgentStudioConnector:
         tac: TAC instance for channel integration.
         agent_id: The CES agent (app) resource name, e.g.
             `projects/<project>/locations/<location>/apps/<app-id>`.
-        sms_config, rcs_config, whatsapp_config, chat_config: each is a
-            channel config or None (default) to disable that channel.
+        sms_config, chat_config: each is a channel config; the channel is
+            always built.
+        rcs_config, whatsapp_config: channel config — tuning only. The
+            channel is built whenever its Twilio resource is configured
+            (TWILIO_RCS_SENDER_ID / TWILIO_WHATSAPP_NUMBER), regardless of
+            this argument.
         voice_config: A `VoiceChannelConfig` builds `self.voice_cascaded`
             (ConversationRelay voice); a `VoiceS2SConfig` builds
             `self.voice_s2s` (native speech-to-speech) — the type decides
@@ -67,15 +71,14 @@ class CXAgentStudioConnector:
             voice channel.
 
     Attributes:
-        sms, rcs, whatsapp, chat: the corresponding channel instance, or
-            None if disabled.
+        sms, chat: the corresponding channel instance.
+        rcs, whatsapp: the corresponding channel instance, or None if its
+            Twilio resource isn't configured.
         voice_cascaded: VoiceChannel for ConversationRelay voice, or None.
         voice_s2s: VoiceS2SChannel for native speech-to-speech voice, or None.
         voice: Whichever of the two above actually got built, or None — for
             callers that don't care which voice approach is active, e.g. a
             server wiring up `voice_channel=connector.voice`.
-        messaging: All enabled messaging channels above, as a list — hand
-            this straight to a server's `messaging_channels=`.
     """
 
     def __init__(
@@ -101,15 +104,14 @@ class CXAgentStudioConnector:
         channels = ConnectorChannels(
             tac,
             sms_config=sms_config,
+            chat_config=chat_config,
             rcs_config=rcs_config,
             whatsapp_config=whatsapp_config,
-            chat_config=chat_config,
         )
         self.sms = channels.sms
         self.rcs = channels.rcs
         self.whatsapp = channels.whatsapp
         self.chat = channels.chat
-        self.messaging = channels.messaging
 
         self.voice_cascaded: VoiceChannel | None = None
         self.voice_s2s: VoiceS2SChannel | None = None

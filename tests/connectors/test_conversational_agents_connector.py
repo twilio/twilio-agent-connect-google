@@ -20,6 +20,96 @@ def make_context(conv_id: str = "conv-1") -> SimpleNamespace:
     return SimpleNamespace(conversation_id=conv_id, profile_id="user-1")
 
 
+def make_tac_for_channels() -> Mock:
+    """A Mock TAC whose config reports no RCS/WhatsApp resource configured —
+    plain Mock() attribute access is truthy, which would otherwise make
+    tac.config.rcs_sender_id/whatsapp_number look "configured" by accident.
+    """
+    tac = Mock()
+    tac.config = Mock(rcs_sender_id=None, whatsapp_number=None)
+    return tac
+
+
+class TestChannelConstruction:
+    def test_sms_voice_chat_always_built(self):
+        with (
+            patch(
+                "tac_google.connectors.conversational_agents_connector.google.auth.default"
+            ) as mock_auth,
+            patch("tac_google.connectors.conversational_agents_connector.AuthorizedSession"),
+            patch(
+                "tac_google.connectors.conversational_agents_connector.VoiceChannel"
+            ) as mock_voice_channel,
+            patch("tac_google.connectors._channels.SMSChannel") as mock_sms_channel,
+            patch("tac_google.connectors._channels.ChatChannel") as mock_chat_channel,
+        ):
+            mock_auth.return_value = (Mock(), None)
+            connector = ConversationalAgentsConnector(
+                tac=make_tac_for_channels(),
+                agent_id="projects/p/locations/us-central1/agents/a",
+            )
+
+        assert connector.voice is mock_voice_channel.return_value
+        assert connector.sms is mock_sms_channel.return_value
+        assert connector.chat is mock_chat_channel.return_value
+
+    def test_rcs_and_whatsapp_none_when_resource_not_configured(self):
+        with (
+            patch(
+                "tac_google.connectors.conversational_agents_connector.google.auth.default"
+            ) as mock_auth,
+            patch("tac_google.connectors.conversational_agents_connector.AuthorizedSession"),
+            patch("tac_google.connectors._channels.RCSChannel") as mock_rcs_channel,
+            patch("tac_google.connectors._channels.WhatsAppChannel") as mock_whatsapp_channel,
+        ):
+            mock_auth.return_value = (Mock(), None)
+            connector = ConversationalAgentsConnector(
+                tac=make_tac_for_channels(),
+                agent_id="projects/p/locations/us-central1/agents/a",
+            )
+
+        assert connector.rcs is None
+        assert connector.whatsapp is None
+        mock_rcs_channel.assert_not_called()
+        mock_whatsapp_channel.assert_not_called()
+
+    def test_rcs_built_when_rcs_sender_id_configured(self):
+        with (
+            patch(
+                "tac_google.connectors.conversational_agents_connector.google.auth.default"
+            ) as mock_auth,
+            patch("tac_google.connectors.conversational_agents_connector.AuthorizedSession"),
+            patch("tac_google.connectors._channels.RCSChannel") as mock_rcs_channel,
+        ):
+            mock_auth.return_value = (Mock(), None)
+            tac = make_tac_for_channels()
+            tac.config.rcs_sender_id = "rcs_sender_123"
+            connector = ConversationalAgentsConnector(
+                tac=tac, agent_id="projects/p/locations/us-central1/agents/a"
+            )
+
+        assert connector.rcs is mock_rcs_channel.return_value
+        mock_rcs_channel.assert_called_once_with(tac=tac, config=None)
+
+    def test_whatsapp_built_when_whatsapp_number_configured(self):
+        with (
+            patch(
+                "tac_google.connectors.conversational_agents_connector.google.auth.default"
+            ) as mock_auth,
+            patch("tac_google.connectors.conversational_agents_connector.AuthorizedSession"),
+            patch("tac_google.connectors._channels.WhatsAppChannel") as mock_whatsapp_channel,
+        ):
+            mock_auth.return_value = (Mock(), None)
+            tac = make_tac_for_channels()
+            tac.config.whatsapp_number = "whatsapp:+15550001234"
+            connector = ConversationalAgentsConnector(
+                tac=tac, agent_id="projects/p/locations/us-central1/agents/a"
+            )
+
+        assert connector.whatsapp is mock_whatsapp_channel.return_value
+        mock_whatsapp_channel.assert_called_once_with(tac=tac, config=None)
+
+
 class TestMaybeTagMemory:
     def test_no_memory_response_returns_message_unchanged(self):
         connector = make_bare_connector()

@@ -9,12 +9,17 @@ from typing import TYPE_CHECKING, Any
 import google.auth
 from google.auth.transport.requests import AuthorizedSession
 from tac.adapters import MemoryPromptBuilder
-from tac.channels.sms import SMSChannel, SMSChannelConfig
+from tac.channels.chat import ChatChannelConfig
+from tac.channels.rcs import RCSChannelConfig
+from tac.channels.sms import SMSChannelConfig
 from tac.channels.voice import VoiceChannel, VoiceChannelConfig
+from tac.channels.whatsapp import WhatsAppChannelConfig
 from tac.core.logging import get_logger
 from tac.core.tac import TAC
 from tac.models.session import ConversationSession
 from tac.models.tac import TACMemoryResponse
+
+from tac_google.connectors._channels import ConnectorChannels
 
 if TYPE_CHECKING:
     from vertexai._genai.types.common import AgentEngine
@@ -28,6 +33,18 @@ class AgentEngineConnectorBase:
     Subclasses implement `_invoke_agent` for their specific deployment's
     invocation contract, and may override `_handle_conversation_ended` to
     clean up any per-conversation state they keep.
+
+    SMS, Voice, and Chat are always built. RCS and WhatsApp are built only
+    when their Twilio resource is configured (TWILIO_RCS_SENDER_ID /
+    TWILIO_WHATSAPP_NUMBER) — see `ConnectorChannels`.
+
+    Args:
+        tac: TAC instance for channel integration.
+        sms_config: SMSChannelConfig or dict.
+        voice_config: VoiceChannelConfig or dict.
+        rcs_config: RCSChannelConfig or dict — tuning only.
+        whatsapp_config: WhatsAppChannelConfig or dict — tuning only.
+        chat_config: ChatChannelConfig or dict.
     """
 
     def __init__(
@@ -35,10 +52,23 @@ class AgentEngineConnectorBase:
         tac: TAC,
         sms_config: SMSChannelConfig | dict[str, Any] | None = None,
         voice_config: VoiceChannelConfig | dict[str, Any] | None = None,
+        rcs_config: RCSChannelConfig | dict[str, Any] | None = None,
+        whatsapp_config: WhatsAppChannelConfig | dict[str, Any] | None = None,
+        chat_config: ChatChannelConfig | dict[str, Any] | None = None,
     ) -> None:
         self.tac = tac
         self.voice = VoiceChannel(tac=tac, config=voice_config)
-        self.sms = SMSChannel(tac=tac, config=sms_config)
+        channels = ConnectorChannels(
+            tac,
+            sms_config=sms_config,
+            chat_config=chat_config,
+            rcs_config=rcs_config,
+            whatsapp_config=whatsapp_config,
+        )
+        self.sms = channels.sms
+        self.rcs = channels.rcs
+        self.whatsapp = channels.whatsapp
+        self.chat = channels.chat
 
         self._last_injected_memory: dict[str, str] = {}
         creds, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])

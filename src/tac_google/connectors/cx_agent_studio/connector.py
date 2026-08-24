@@ -8,14 +8,18 @@ from typing import Any
 import google.auth
 from google.auth.transport.requests import AuthorizedSession
 from tac.adapters import MemoryPromptBuilder
-from tac.channels.sms import SMSChannel, SMSChannelConfig
+from tac.channels.chat import ChatChannelConfig
+from tac.channels.rcs import RCSChannelConfig
+from tac.channels.sms import SMSChannelConfig
 from tac.channels.voice import VoiceChannel, VoiceChannelConfig
+from tac.channels.whatsapp import WhatsAppChannelConfig
 from tac.core.logging import get_logger
 from tac.core.tac import TAC
 from tac.models.handoff import PendingHandoffData
 from tac.models.session import ConversationSession
 from tac.models.tac import TACMemoryResponse
 
+from tac_google.connectors._channels import ConnectorChannels
 from tac_google.connectors.cx_agent_studio.voice_s2s import VoiceS2SChannel, VoiceS2SConfig
 
 logger = get_logger(__name__)
@@ -54,31 +58,38 @@ class CXAgentStudioConnector:
         tac: TAC instance for channel integration.
         agent_id: The CES agent (app) resource name, e.g.
             `projects/<project>/locations/<location>/apps/<app-id>`.
-        sms_config: SMS channel configuration (SMSChannelConfig or dict).
-            Defaults to a plain `SMSChannelConfig()`, so an SMS channel is
-            built unless you pass `sms_config=None` explicitly to opt out.
-        voice_config: Pass a `VoiceChannelConfig` for ConversationRelay voice
-            (builds `self.voice_cascaded`) or a `VoiceS2SConfig` for native
-            speech-to-speech voice (builds `self.voice_s2s`) — the config
-            type decides which channel gets built, which is why a plain dict
-            isn't accepted here. Omit (None) for no voice channel.
+        sms_config, chat_config: each is a channel config; the channel is
+            always built.
+        rcs_config, whatsapp_config: channel config — tuning only. The
+            channel is built whenever its Twilio resource is configured
+            (TWILIO_RCS_SENDER_ID / TWILIO_WHATSAPP_NUMBER), regardless of
+            this argument.
+        voice_config: A `VoiceChannelConfig` builds `self.voice_cascaded`
+            (ConversationRelay voice); a `VoiceS2SConfig` builds
+            `self.voice_s2s` (native speech-to-speech) — the type decides
+            which, so a plain dict isn't accepted. None (default) for no
+            voice channel.
 
     Attributes:
+        sms, chat: the corresponding channel instance.
+        rcs, whatsapp: the corresponding channel instance, or None if its
+            Twilio resource isn't configured.
         voice_cascaded: VoiceChannel for ConversationRelay voice, or None.
         voice_s2s: VoiceS2SChannel for native speech-to-speech voice, or None.
-        voice: Whichever of the two above actually got built (or None) — for
+        voice: Whichever of the two above actually got built, or None — for
             callers that don't care which voice approach is active, e.g. a
             server wiring up `voice_channel=connector.voice`.
-        sms: SMSChannel instance for SMS conversations, or None if
-            `sms_config=None` was passed explicitly to opt out.
     """
 
     def __init__(
         self,
         tac: TAC,
         agent_id: str,
-        sms_config: SMSChannelConfig | dict[str, Any] | None = SMSChannelConfig(),  # noqa: B008
+        sms_config: SMSChannelConfig | dict[str, Any] | None = None,
         voice_config: VoiceChannelConfig | VoiceS2SConfig | None = None,
+        rcs_config: RCSChannelConfig | dict[str, Any] | None = None,
+        whatsapp_config: WhatsAppChannelConfig | dict[str, Any] | None = None,
+        chat_config: ChatChannelConfig | dict[str, Any] | None = None,
     ) -> None:
         self.tac = tac
         self.agent_id = agent_id.rstrip("/")
@@ -90,7 +101,17 @@ class CXAgentStudioConnector:
         # resulting 401 with a fresh refresh.
         self._session = AuthorizedSession(creds)
 
-        self.sms = SMSChannel(tac=tac, config=sms_config) if sms_config is not None else None
+        channels = ConnectorChannels(
+            tac,
+            sms_config=sms_config,
+            chat_config=chat_config,
+            rcs_config=rcs_config,
+            whatsapp_config=whatsapp_config,
+        )
+        self.sms = channels.sms
+        self.rcs = channels.rcs
+        self.whatsapp = channels.whatsapp
+        self.chat = channels.chat
 
         self.voice_cascaded: VoiceChannel | None = None
         self.voice_s2s: VoiceS2SChannel | None = None

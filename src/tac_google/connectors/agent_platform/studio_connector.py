@@ -6,8 +6,11 @@ import asyncio
 import json
 from typing import TYPE_CHECKING, Any
 
+from tac.channels.chat import ChatChannelConfig
+from tac.channels.rcs import RCSChannelConfig
 from tac.channels.sms import SMSChannelConfig
 from tac.channels.voice import VoiceChannelConfig
+from tac.channels.whatsapp import WhatsAppChannelConfig
 from tac.core.tac import TAC
 from tac.models.session import ConversationSession
 from tac.models.tac import TACMemoryResponse
@@ -47,12 +50,17 @@ class StudioAgentEngineConnector(AgentEngineConnectorBase):
         tac: TAC instance for channel integration
         agent: Deployed Studio agent instance, from
             `vertexai.Client().agent_engines.get(name=...)`.
-        sms_config: Optional SMS channel configuration (SMSChannelConfig or dict)
-        voice_config: Optional Voice channel configuration (VoiceChannelConfig or dict)
+        sms_config, voice_config, chat_config: each is a channel config; the
+            channel is always built.
+        rcs_config, whatsapp_config: channel config — tuning only. The
+            channel is built whenever its Twilio resource is configured
+            (TWILIO_RCS_SENDER_ID / TWILIO_WHATSAPP_NUMBER), regardless of
+            this argument.
 
     Attributes:
-        voice: VoiceChannel instance for voice conversations
-        sms: SMSChannel instance for SMS conversations
+        voice, sms, chat: the corresponding channel instance.
+        rcs, whatsapp: the corresponding channel instance, or None if its
+            Twilio resource isn't configured.
 
     Example:
         ```python
@@ -73,7 +81,7 @@ class StudioAgentEngineConnector(AgentEngineConnectorBase):
         server = TACFastAPIServer(
             tac=tac,
             voice_channel=connector.voice,
-            sms_channel=connector.sms
+            messaging_channels=[connector.sms],
         )
         server.start()
         ```
@@ -85,10 +93,20 @@ class StudioAgentEngineConnector(AgentEngineConnectorBase):
         agent: AgentEngine,
         sms_config: SMSChannelConfig | dict[str, Any] | None = None,
         voice_config: VoiceChannelConfig | dict[str, Any] | None = None,
+        rcs_config: RCSChannelConfig | dict[str, Any] | None = None,
+        whatsapp_config: WhatsAppChannelConfig | dict[str, Any] | None = None,
+        chat_config: ChatChannelConfig | dict[str, Any] | None = None,
     ) -> None:
         self.agent = agent
         self.studio_sessions_created: set[str] = set()
-        super().__init__(tac, sms_config, voice_config)
+        super().__init__(
+            tac,
+            sms_config,
+            voice_config,
+            rcs_config=rcs_config,
+            whatsapp_config=whatsapp_config,
+            chat_config=chat_config,
+        )
 
         base_url = self._agent_engine_base_url(agent)
         self._sessions_url = f"{base_url}/sessions"

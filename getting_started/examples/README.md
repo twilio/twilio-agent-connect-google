@@ -12,6 +12,8 @@ single feature in isolation):
   WhatsApp by setting `TWILIO_WHATSAPP_NUMBER`
 - **RCS channel** ([`features/rcs.py`](features/rcs.py)) - enable RCS by
   setting `TWILIO_RCS_SENDER_ID`
+- **Chat channel** ([`features/chat/app.py`](features/chat/app.py)) - browser-based
+  web chat via the Twilio Conversations JS SDK, with a runnable local server
 
 ---
 
@@ -362,6 +364,71 @@ ngrok http 8000
 
 Point your RCS sender's incoming-message webhook (Conversation Orchestrator
 status callback) at `https://your-domain.ngrok.io/webhook`.
+
+---
+
+## Chat Channel Example
+
+Browser-based web chat via the Twilio Conversations JS SDK — no ngrok or
+Twilio phone number needed, runs entirely on localhost.
+
+### 1. Configure Environment
+
+Uses the Conversational Agents variables from `.env.example` (see the
+"Conversational Agents examples" comment block), plus
+`TWILIO_CONVERSATIONS_SERVICE_SID`:
+
+```bash
+CONVERSATIONAL_AGENT_ID=projects/your-project/locations/us-central1/agents/your-agent-id
+DIALOGFLOW_LANGUAGE_CODE=en
+TWILIO_CONVERSATIONS_SERVICE_SID=ISxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+`TWILIO_CONVERSATIONS_SERVICE_SID` is the Conversations v1 Service SID
+(starts with `IS`) — **not** the Conversation Orchestrator configuration ID.
+Your Conversation Orchestrator configuration must have a classic
+Conversations service (with Chat enabled) attached: Console → Conversation
+Orchestrator → Conversation Configuration → Channel traffic → "+ Add
+messaging & chat traffic".
+
+### 2. Authenticate
+
+```bash
+gcloud auth application-default login
+```
+
+### 3. Run Server
+
+```bash
+python features/chat/app.py
+```
+
+### 4. Open the Chat UI
+
+Open http://localhost:8000 and pick one of the predefined identities to
+start chatting — no ngrok or Twilio webhook configuration needed, the
+browser talks to Twilio directly via the Conversations JS SDK.
+
+### How it Works
+
+- **Frontend** (`features/chat/public/index.html`) — fetches an access
+  token from `POST /token`, then creates and sends messages through the
+  Conversations JS SDK.
+- **Backend** (`features/chat/app.py`) — a `TACFastAPIServer` with
+  `ConversationalAgentsConnector` + `ChatChannel`; `POST /webhook` receives
+  Conversation Orchestrator events, calls Dialogflow CX (`detectIntent`) for
+  a response, and sends it back via the Conversation Orchestrator Actions
+  API.
+
+```
+Browser (Conversations JS SDK) → Twilio Conversations →
+  Conversation Orchestrator → webhook → server → Dialogflow CX →
+  Conversation Orchestrator Actions API → Twilio Conversations →
+  Browser (Conversations JS SDK)
+```
+
+Only `connector.chat` is wired to the server — SMS/Voice (which the
+connector always builds) are left unwired.
 
 ---
 

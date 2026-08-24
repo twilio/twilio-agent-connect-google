@@ -120,6 +120,7 @@ Full examples available in [`getting_started/examples/`](getting_started/example
 - **`cx_agent_studio/s2s.py`** - Same CX Agent Studio agent, but native speech-to-speech voice (Twilio Media Streams + `BidiRunSession`, no ConversationRelay)
 - **`conversational_agents.py`** - Connect Twilio to an agent built in Conversational Agents (Dialogflow CX)
 - **`features/whatsapp.py`**, **`features/rcs.py`** - Enable a single messaging channel (WhatsApp or RCS) on its own
+- **`features/chat/`** - Browser-based web chat (Twilio Conversations JS SDK), runnable entirely on localhost
 
 ## Deployment
 

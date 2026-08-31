@@ -93,7 +93,7 @@ graph TB
 
 ## Prerequisites
 
-### Required Tools
+### Local Requirements
 
 | What             | Where                                                                                                | Needed for                                        |
 | ---------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
@@ -102,26 +102,17 @@ graph TB
 
 ### Google Cloud Requirements
 
-Three items, all before you deploy.
+| What                                                    | Where                                             | .env value              |
+| ------------------------------------------------------- | ------------------------------------------------- | ----------------------- |
+| Project with billing and CX Agent Studio access         | [Cloud Console](https://console.cloud.google.com) | `GOOGLE_CLOUD_PROJECT`  |
+| Region with Cloud Run availability                      | any                                               | `GOOGLE_CLOUD_LOCATION` |
+| Deployed agent, **Set up API access** on its Deploy tab | [`agent/README.md`](./agent/README.md)            | `CX_AGENT_ID`           |
 
-| What                                                                 | Where                                                                                     | .env value                                                      |
-| -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| A project with billing enabled and CX Agent Studio access            | [Cloud Console](https://console.cloud.google.com)                                         | `GOOGLE_CLOUD_PROJECT`                                          |
-| A region with Cloud Run availability                                 | any; the agent itself lives in the CX Agent Studio `us` multi-region, independent of this | `GOOGLE_CLOUD_LOCATION`                                         |
-| A deployed agent with **Set up API access** chosen on its Deploy tab | [`agent/README.md`](./agent/README.md)                                                    | `CX_AGENT_ID` (`projects/<project>/locations/us/apps/<app-id>`) |
-
-APIs and service accounts are handled for you: `server/deploy.sh` enables Cloud
-Run, Cloud Build, and Artifact Registry, and `make create-sa` creates the deploy
-SA (`tac-deployer@<project>`), which `server/deploy.sh` then grants its roles
-along with the Cloud Run runtime SA's `roles/ces.client` and Secret Manager
-access.
+The deploy scripts handle API enablement and both service accounts.
 
 ### Twilio Requirements
 
-Four items are required before you deploy. Paths are in the
-[Twilio Console](https://1console.twilio.com).
-
-| What                                                                 | Where                                                                                  | .env value                                          |
+| What                                                                 | Where ([Twilio Console](https://1console.twilio.com))                                  | .env value                                          |
 | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | --------------------------------------------------- |
 | Account SID (starts `AC`)                                            | Console Dashboard                                                                      | `TWILIO_ACCOUNT_SID`                                |
 | Auth Token                                                           | **Develop > API Key & creds > API Keys & auth tokens > Auth Tokens** tab               | `TWILIO_AUTH_TOKEN`                                 |
@@ -132,22 +123,19 @@ That's everything voice needs.
 
 #### Optional
 
-| What                       | Where                                                                                                                                                          | .env value                                     | Enables                                                                                                                                       |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Conversation Configuration | [Conversation Orchestrator quickstart](https://www.twilio.com/docs/conversations/orchestrator/quickstart#create-a-memory-store-and-conversation-configuration) | `TWILIO_CONVERSATION_CONFIGURATION_ID`         | Messaging and Conversation Memory. Omit it and TAC runs voice-only: messaging channels can't be built and Conversation Memory returns nothing |
-| RCS sender                 | **Products & services > Numbers & senders**                                                                                                                    | `TWILIO_RCS_SENDER_ID`                         | the RCS channel                                                                                                                               |
-| WhatsApp sender            | **Products & services > Numbers & senders**                                                                                                                    | `TWILIO_WHATSAPP_NUMBER` (`whatsapp:+1555...`) | the WhatsApp channel                                                                                                                          |
+| What                       | Where                                                                                                                                                          | .env value                                     | Enables                                                   |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- | --------------------------------------------------------- |
+| Conversation Configuration | [Conversation Orchestrator quickstart](https://www.twilio.com/docs/conversations/orchestrator/quickstart#create-a-memory-store-and-conversation-configuration) | `TWILIO_CONVERSATION_CONFIGURATION_ID`         | messaging and Conversation Memory; without it, voice only |
+| RCS sender                 | **Products & services > Numbers & senders**                                                                                                                    | `TWILIO_RCS_SENDER_ID`                         | the RCS channel                                           |
+| WhatsApp sender            | **Products & services > Numbers & senders**                                                                                                                    | `TWILIO_WHATSAPP_NUMBER` (`whatsapp:+1555...`) | the WhatsApp channel                                      |
 
-The Conversation Configuration's webhook is the same `/webhook` URL you set in
-[Twilio Configuration](#configure-conversation-webhook-messaging) below. You
-won't know the Cloud Run host until the first deploy, so leave it for now and
-fill it in afterwards.
+Leave the Conversation Configuration's webhook blank for now. It needs the Cloud
+Run host, which you get after the first deploy
+([Twilio Configuration](#configure-conversation-webhook-messaging)).
 
-Before you can message numbers other than your own, SMS needs a registered brand
-and campaign, and RCS needs carrier approval of your branding. Until RCS
-approval comes through, you can only message test numbers you've listed in the
-Console. Both processes run between you and Twilio, outside this deploy, and both
-block end-to-end testing, so start them early.
+To message numbers beyond your own test numbers, SMS needs a registered brand
+and campaign and RCS needs carrier approval. Both go through Twilio and both
+block end-to-end testing, so start early.
 
 ---
 

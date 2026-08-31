@@ -1,4 +1,4 @@
-# TAC CX Agent Studio + Cloud Run Deployment
+# Connect Twilio to a CX Agent Studio agent
 
 [Twilio Agent Connect (TAC)](https://www.twilio.com/docs/conversations/agent-connect)
 connects AI agents to Twilio's voice and messaging channels. This deploys it on
@@ -8,7 +8,7 @@ Suite).
 Two pieces deploy independently:
 
 - **The agent** (not in this repo), built and deployed in the Google Cloud
-  console. See [`agent/`](./agent/).
+  console. See [`agent/`](./agent/) for how to create it.
 - **The TAC server** (this repo), a FastAPI app that connects Twilio's voice and
   messaging channels to your agent. Deployed to Cloud Run from
   [`server/`](./server/).

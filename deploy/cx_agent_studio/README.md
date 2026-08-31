@@ -1,4 +1,4 @@
-# Connect Twilio to a CX Agent Studio agent
+# Connect Twilio to CX Agent Studio
 
 [Twilio Agent Connect (TAC)](https://www.twilio.com/docs/conversations/agent-connect)
 connects AI agents to Twilio's voice and messaging channels. This deploys it on

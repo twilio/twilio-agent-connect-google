@@ -1,7 +1,7 @@
 # Connect Twilio to CX Agent Studio
 
-[Twilio Agent Connect (TAC)](https://www.twilio.com/docs/conversations/agent-connect)
-connects AI agents to Twilio's voice and messaging channels. This deploys it on
+The [Twilio Agent Connect (TAC)](https://www.twilio.com/docs/conversations/agent-connect)
+SDK connects AI agents to Twilio's voice and messaging channels. This deploys it on
 Cloud Run, wired to an agent built in **CX Agent Studio** (Customer Engagement
 Suite).
 

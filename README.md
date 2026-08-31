@@ -19,14 +19,14 @@
   </div>
 
   <p>
-    <a href="https://www.twilio.com/docs/platform/tac/overview">Documentation</a>
+    <a href="https://www.twilio.com/docs/conversations/agent-connect">Documentation</a>
     ◆ <a href="https://github.com/twilio/twilio-agent-connect-python">Python SDK</a>
     ◆ <a href="getting_started/examples/">Examples</a>
     ◆ <a href="deploy/">Deployment</a>
   </p>
 </div>
 
-Google Cloud-specific connectors for [Twilio Agent Connect (TAC)](https://github.com/twilio/twilio-agent-connect-python), enabling seamless integration with Google Cloud agent services like Agent Platform Runtime (Reasoning Engine), CX Agent Studio (Customer Engagement Suite), Conversational Agents (Dialogflow CX), and the Agent Development Kit (ADK).
+Google Cloud-specific connectors for [Twilio Agent Connect (TAC)](https://www.twilio.com/docs/conversations/agent-connect) — Twilio's framework for connecting AI agents to voice and messaging channels ([Python SDK](https://github.com/twilio/twilio-agent-connect-python)) — enabling seamless integration with Google Cloud agent services like Agent Platform Runtime (Reasoning Engine), CX Agent Studio (Customer Engagement Suite), Conversational Agents (Dialogflow CX), and the Agent Development Kit (ADK).
 
 ---
 
@@ -51,7 +51,7 @@ Google Cloud-specific connectors for [Twilio Agent Connect (TAC)](https://github
 ### Production Ready
 - **Twilio webhook validation** - Automatic signature verification for secure integrations
 - **Secret Manager** - Twilio credentials stored in Google Secret Manager, injected at runtime
-- **Session & memory** - Server-side sessions (ADK and Agent Studio), with TAC memory injection
+- **Session & memory** - Server-side sessions (ADK and Agent Studio), with Conversation Memory injection
 
 ## Installation
 

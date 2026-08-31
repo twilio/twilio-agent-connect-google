@@ -33,8 +33,9 @@ class ADKAgentEngineConnector(AgentEngineConnectorBase):
     hard-codes this in its `register_operations()`), so no method-detection
     is needed for it.
 
-    TAC memory is injected on every message, wrapped in `<MEMORY>...</MEMORY>`
-    ahead of the user's text (wrapped in `<USER_MESSAGE>...</USER_MESSAGE>`),
+    Conversation Memory is injected on every message, wrapped in
+    `<MEMORY>...</MEMORY>` ahead of the user's text (which is itself wrapped in
+    `<USER_MESSAGE>...</USER_MESSAGE>`),
     since ADK's `stream_query`/`async_stream_query` API has only one content
     channel (`message`) — there is no separate instructions/context parameter.
 

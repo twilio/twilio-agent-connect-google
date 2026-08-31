@@ -49,8 +49,8 @@ class ConversationalAgentsConnector:
     (default 30 min). This connector derives one stable session id per
     conversation (a UUID hash of the TAC conversation id, to fit Dialogflow's
     36-char session id limit) and reuses it on every turn, so Dialogflow keeps
-    the context (no local history is built). TAC memory is injected only
-    when it changes turn-to-turn (see `_maybe_tag_memory`).
+    the context (no local history is built). Conversation Memory is injected
+    only when it changes turn-to-turn (see `_maybe_tag_memory`).
 
     Args:
         tac: TAC instance for channel integration.

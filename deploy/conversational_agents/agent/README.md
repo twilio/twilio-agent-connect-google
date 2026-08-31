@@ -3,7 +3,8 @@
 [Conversational Agents](https://docs.cloud.google.com/dialogflow/cx/docs) is
 Google's Dialogflow CX platform. You build the agent in the console; it is
 invocable immediately (no deploy needed) over the Dialogflow CX `detectIntent`
-API. The TAC server connects Twilio to it over that same API.
+API. The [Twilio Agent Connect (TAC)](https://www.twilio.com/docs/conversations/agent-connect)
+server connects Twilio to it over that same API.
 
 ## Build the agent
 

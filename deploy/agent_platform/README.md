@@ -1,7 +1,9 @@
 # TAC Agent Platform Runtime + Cloud Run Deployment
 
-Deploy Twilio Agent Connect with an agent on GCP Agent Platform Runtime and the
-TAC server on Cloud Run. This directory has one fully independent deployment
+Deploy [Twilio Agent Connect (TAC)](https://www.twilio.com/docs/conversations/agent-connect)
+— Twilio's framework for connecting AI agents to voice and messaging channels —
+with an agent on GCP Agent Platform Runtime and the TAC server on Cloud Run.
+This directory has one fully independent deployment
 per agent type — pick one:
 
 - **[`adk/`](./adk/)** — an ADK agent, connected via `ADKAgentEngineConnector`.

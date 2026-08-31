@@ -1,7 +1,9 @@
 # TAC Agent Studio + Cloud Run Deployment
 
-Deploy Twilio Agent Connect with an Agent Studio app on GCP Agent Platform
-Runtime and the TAC server on Cloud Run.
+Deploy [Twilio Agent Connect (TAC)](https://www.twilio.com/docs/conversations/agent-connect)
+— Twilio's framework for connecting AI agents to voice and messaging channels —
+with an Agent Studio app on GCP Agent Platform Runtime and the TAC server on
+Cloud Run.
 
 The flow has two independently deployed pieces:
 - **Agent** (`agent/`) — a source-code app built and deployed from the Agent

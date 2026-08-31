@@ -47,7 +47,7 @@ class CXAgentStudioConnector:
 
     Conversation history is kept server-side by CES: the TAC conversation id
     doubles as the CES session id, so every turn lands in the same session
-    and no local history is built. TAC memory is injected only when it
+    and no local history is built. Conversation Memory is injected only when it
     changes turn-to-turn (see `_maybe_tag_memory`).
 
     Every CX Agent Studio agent has an `end_session` tool attached by

@@ -1,6 +1,8 @@
 # Examples
 
-Connect Twilio to GCP agents:
+Connect Twilio to GCP agents with
+[Twilio Agent Connect (TAC)](https://www.twilio.com/docs/conversations/agent-connect),
+Twilio's framework for connecting AI agents to voice and messaging channels:
 - **ADK Agent Engine** - ADK agents deployed on GCP Agent Platform Runtime
 - **Agent Studio Agent Engine** - Agent Studio apps deployed on GCP Agent Platform Runtime
 - **CX Agent Studio** - Agents built in CX Agent Studio (Customer Engagement Suite)

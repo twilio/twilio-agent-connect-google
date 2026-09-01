@@ -1,8 +1,11 @@
-# TAC Conversational Agents (Dialogflow CX) + Cloud Run Deployment
+# Connect Twilio to a Conversational Agents (Dialogflow CX) agent
 
 Connect Twilio Voice and SMS to an agent built in **Conversational Agents**
-(Dialogflow CX). The agent is built in the console; a TAC server on Cloud Run
-bridges Twilio to it over the Dialogflow CX `detectIntent` API.
+(Dialogflow CX). The agent is built in the console; a
+[Twilio Agent Connect (TAC)](https://www.twilio.com/docs/conversations/agent-connect)
+server — TAC being Twilio's framework for connecting AI agents to voice and
+messaging channels — runs on Cloud Run and bridges Twilio to it over the
+Dialogflow CX `detectIntent` API.
 
 The agent has **no knowledge of Twilio**; the server has **no LLM logic**. The
 `ConversationalAgentsConnector` is the seam between them. Twilio ConversationRelay

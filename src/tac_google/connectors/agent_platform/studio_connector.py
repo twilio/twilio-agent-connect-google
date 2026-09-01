@@ -41,8 +41,9 @@ class StudioAgentEngineConnector(AgentEngineConnectorBase):
       session's stored events on every call, so there's no local
       conversation history to maintain here either.
 
-    TAC memory is injected on every message, wrapped in `<MEMORY>...</MEMORY>`
-    ahead of the user's text (wrapped in `<USER_MESSAGE>...</USER_MESSAGE>`),
+    Conversation Memory is injected on every message, wrapped in
+    `<MEMORY>...</MEMORY>` ahead of the user's text (which is itself wrapped in
+    `<USER_MESSAGE>...</USER_MESSAGE>`),
     for the same reason as the ADK connector: there's no separate
     instructions/context parameter, only the one `message` channel.
 

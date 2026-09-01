@@ -9,8 +9,8 @@ Since there's no discrete turn, TAC's turn callbacks don't apply here;
 `process_webhook`/`send_response` are no-ops just to satisfy `BaseChannel`'s
 abstract interface.
 
-Supports neither Conversation Orchestrator nor TAC Memory for voice, unlike
-`VoiceChannel` which supports both.
+Supports neither Conversation Orchestrator nor Conversation Memory for voice,
+unlike `VoiceChannel` which supports both.
 """
 
 from __future__ import annotations

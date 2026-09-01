@@ -1,6 +1,8 @@
 # Deployment Guide
 
-Deploy AI agents to GCP and connect them to Twilio.
+Deploy AI agents to GCP and connect them to Twilio with
+[Twilio Agent Connect (TAC)](https://www.twilio.com/docs/conversations/agent-connect),
+Twilio's framework for connecting AI agents to voice and messaging channels.
 
 ## Deployment methods
 

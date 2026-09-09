@@ -124,7 +124,7 @@ Full examples available in [`getting_started/examples/`](getting_started/example
 
 ## Deployment
 
-See [`deploy/README.md`](deploy/README.md) for production deployment guides:
+See [`deploy/`](deploy/) for production deployment guides:
 
 ### Cloud Run (Agent Platform Runtime) ⭐ Recommended
 - Deploy your **agent** (ADK, or a source-code app built in Agent Studio) to Agent Platform Runtime and the **TAC server** to Cloud Run

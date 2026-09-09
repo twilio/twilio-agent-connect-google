@@ -58,12 +58,14 @@ class CXAgentStudioConnector:
         tac: TAC instance for channel integration.
         agent_id: The CES agent (app) resource name, e.g.
             `projects/<project>/locations/<location>/apps/<app-id>`.
-        sms_config, chat_config: each is a channel config; the channel is
-            always built.
-        rcs_config, whatsapp_config: channel config — tuning only. The
-            channel is built whenever its Twilio resource is configured
-            (TWILIO_RCS_SENDER_ID / TWILIO_WHATSAPP_NUMBER), regardless of
-            this argument.
+        sms_config: SMS channel config; the channel is always built.
+        chat_config: Chat channel config; the channel is always built.
+        rcs_config: RCS channel config — tuning only. The channel is built
+            whenever TWILIO_RCS_SENDER_ID is configured, regardless of this
+            argument.
+        whatsapp_config: WhatsApp channel config — tuning only. The channel
+            is built whenever TWILIO_WHATSAPP_NUMBER is configured, regardless
+            of this argument.
         voice_config: A `VoiceChannelConfig` builds `self.voice_cascaded`
             (ConversationRelay voice); a `VoiceS2SConfig` builds
             `self.voice_s2s` (native speech-to-speech) — the type decides

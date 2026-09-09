@@ -14,7 +14,7 @@ Google Cloud console ([CX Agent Studio](https://docs.cloud.google.com/gemini-ent
 is the low-code visual builder there for Customer Engagement Suite agents), so
 this folder has no agent source and no deploy script. The
 [Twilio Agent Connect (TAC)](https://www.twilio.com/docs/conversations/agent-connect)
-server ([`../server/main.py`](../server/main.py)) is the part that deploys, to
+server (`server/main.py`) is the part that deploys, to
 Cloud Run, and it connects Twilio to the agent over the agent's API.
 
 ## Build the agent

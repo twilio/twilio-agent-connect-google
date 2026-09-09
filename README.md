@@ -189,7 +189,7 @@ twilio-agent-connect-google depends on:
 
 ## Contributing
 
-Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, coding rules, and the pull request process. All contributors are expected to follow our [Code of Conduct](CODE_OF_CONDUCT.md).
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 

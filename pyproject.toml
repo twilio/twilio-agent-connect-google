@@ -57,7 +57,7 @@ dev = [
     # Google Cloud SDK dependencies
     "google-cloud-aiplatform[agent-engines]>=1.148.1,<2",
     "google-genai>=2.9,<3",
-    "google-adk[a2a]>=2.2.0,<2.3",
+    "google-adk[a2a]>=2.2.0,<2.9",
     # Server dependencies (via TAC core)
     "twilio-agent-connect[server]>=2.3.0,<3",
     "python-dotenv>=1.0.0",

@@ -26,7 +26,7 @@ raw call audio streams to the agent.
 | Agent API                                               | `runSession` (text)                      | `BidiRunSession` (audio)                  |
 | Voice + Conversation Orchestrator / Conversation Memory | Yes / Yes                                | No / No                                   |
 
-[`server/main.py`](./server/main.py) picks which one you get, and switching is a
+`server/main.py` picks which one you get, and switching is a
 one-file edit (see [step 5](#5-optional-switch-voice-approach)).
 
 Below, blue edges are the cascaded voice path, purple speech-to-speech; black

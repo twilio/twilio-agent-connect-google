@@ -57,12 +57,15 @@ class ConversationalAgentsConnector:
         agent_id: The Dialogflow CX agent resource name, e.g.
             `projects/<project>/locations/<location>/agents/<agent-id>`.
         language_code: Language code for queries (default "en").
-        sms_config, voice_config, chat_config: each is a channel config; the
-            channel is always built.
-        rcs_config, whatsapp_config: channel config — tuning only. The
-            channel is built whenever its Twilio resource is configured
-            (TWILIO_RCS_SENDER_ID / TWILIO_WHATSAPP_NUMBER), regardless of
-            this argument.
+        sms_config: SMS channel config; the channel is always built.
+        voice_config: Voice channel config; the channel is always built.
+        chat_config: Chat channel config; the channel is always built.
+        rcs_config: RCS channel config — tuning only. The channel is built
+            whenever TWILIO_RCS_SENDER_ID is configured, regardless of this
+            argument.
+        whatsapp_config: WhatsApp channel config — tuning only. The channel
+            is built whenever TWILIO_WHATSAPP_NUMBER is configured, regardless
+            of this argument.
 
     Attributes:
         voice, sms, chat: the corresponding channel instance.

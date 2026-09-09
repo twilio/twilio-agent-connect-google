@@ -1,0 +1,1 @@
+--8<-- "deploy/agent_platform/adk/README.md"

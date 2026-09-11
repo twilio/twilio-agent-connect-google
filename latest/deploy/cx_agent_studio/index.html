@@ -1,0 +1,2017 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Google Cloud integrations for Twilio Agent Connect - connectors for Google Cloud agent runtimes">
+      
+      
+      
+        <link rel="canonical" href="https://twilio.github.io/twilio-agent-connect-google/1.0.0/deploy/cx_agent_studio/">
+      
+      
+        <link rel="prev" href="../agent_platform/studio/agent/">
+      
+      
+        <link rel="next" href="agent/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/twilio-logo.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Overview - Twilio Agent Connect (Google Cloud)</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#connect-twilio-to-cx-agent-studio" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Twilio Agent Connect (Google Cloud)" class="md-header__button md-logo" aria-label="Twilio Agent Connect (Google Cloud)" data-md-component="logo">
+      
+  <img src="../../assets/twilio-logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Twilio Agent Connect (Google Cloud)
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Overview
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/twilio/twilio-agent-connect-google" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    twilio/twilio-agent-connect-google
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Twilio Agent Connect (Google Cloud)" class="md-nav__button md-logo" aria-label="Twilio Agent Connect (Google Cloud)" data-md-component="logo">
+      
+  <img src="../../assets/twilio-logo.svg" alt="logo">
+
+    </a>
+    Twilio Agent Connect (Google Cloud)
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/twilio/twilio-agent-connect-google" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    twilio/twilio-agent-connect-google
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/connectors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Connectors
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/agent_platform/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Platform Runtime
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/cx_agent_studio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CX Agent Studio
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/conversational_agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conversational Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deployment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Platform Runtime
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Agent Platform Runtime
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../agent_platform/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../agent_platform/adk/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADK agent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../agent_platform/studio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Studio app
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../agent_platform/studio/agent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Studio setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CX Agent Studio
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CX Agent Studio
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deployment-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deployment Components
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Prerequisites">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#local-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Local Requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#google-cloud-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Google Cloud Requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#twilio-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Twilio Requirements
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Twilio Requirements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Start
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quick Start">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-build-the-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Build the agent
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-configure-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Configure Environment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-authenticate-one-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Authenticate (one-time)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-create-the-deploy-service-account-one-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Create the deploy service account (one-time)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-optional-switch-voice-approach" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. (Optional) Switch voice approach
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-deploy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Deploy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#twilio-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Twilio Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Twilio Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configure-voice-webhook-phone-number" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configure Voice Webhook (Phone Number)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-conversation-webhook-messaging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configure Conversation Webhook (Messaging)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#view-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        View Logs
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="View Logs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cloud-run-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cloud Run Logs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#request-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request Logs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#update-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update Code
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="agent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conversational Agents
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Conversational Agents
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../conversational_agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../conversational_agents/agent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deployment-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deployment Components
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Prerequisites">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#local-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Local Requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#google-cloud-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Google Cloud Requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#twilio-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Twilio Requirements
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Twilio Requirements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Start
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quick Start">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-build-the-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Build the agent
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-configure-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Configure Environment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-authenticate-one-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Authenticate (one-time)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-create-the-deploy-service-account-one-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Create the deploy service account (one-time)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-optional-switch-voice-approach" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. (Optional) Switch voice approach
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-deploy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Deploy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#twilio-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Twilio Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Twilio Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configure-voice-webhook-phone-number" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configure Voice Webhook (Phone Number)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-conversation-webhook-messaging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configure Conversation Webhook (Messaging)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#view-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        View Logs
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="View Logs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cloud-run-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cloud Run Logs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#request-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request Logs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#update-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update Code
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="connect-twilio-to-cx-agent-studio">Connect Twilio to CX Agent Studio<a class="headerlink" href="#connect-twilio-to-cx-agent-studio" title="Permanent link">&para;</a></h1>
+<p>The <a href="https://www.twilio.com/docs/conversations/agent-connect">Twilio Agent Connect (TAC)</a>
+SDK connects AI agents to Twilio's voice and messaging channels. This deploys it on
+Cloud Run, wired to an agent built in <strong>CX Agent Studio</strong> (Customer Engagement
+Suite).</p>
+<p>Two pieces deploy independently:</p>
+<ul>
+<li><strong>The agent</strong> (not in this repo), built and deployed in the Google Cloud
+  console. See <a href="./agent/"><code>agent/</code></a> for how to create it.</li>
+<li><strong>The TAC server</strong> (this repo), a FastAPI app that connects Twilio's voice and
+  messaging channels to your agent. Deployed to Cloud Run from
+  <a href="./server/"><code>server/</code></a>.</li>
+</ul>
+<h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
+<p>Voice can run <strong>cascaded</strong>, where Twilio does the speech-to-text and
+text-to-speech and your agent only ever sees text, or <strong>speech-to-speech</strong>, where
+raw call audio streams to the agent.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>cascaded (default)</th>
+<th>speech-to-speech (<code>s2s</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>What carries the call</td>
+<td>ConversationRelay, text over a WebSocket</td>
+<td>Media Streams, raw audio over a WebSocket</td>
+</tr>
+<tr>
+<td>Who does the STT/TTS</td>
+<td>Twilio</td>
+<td>CX Agent Studio</td>
+</tr>
+<tr>
+<td>Agent API</td>
+<td><code>runSession</code> (text)</td>
+<td><code>BidiRunSession</code> (audio)</td>
+</tr>
+<tr>
+<td>Voice + Conversation Orchestrator / Conversation Memory</td>
+<td>Yes / Yes</td>
+<td>No / No</td>
+</tr>
+</tbody>
+</table>
+<p><code>server/main.py</code> picks which one you get, and switching is a
+one-file edit (see <a href="#5-optional-switch-voice-approach">step 5</a>).</p>
+<p>Below, blue edges are the cascaded voice path, purple speech-to-speech; black
+edges are common to both.</p>
+<pre class="mermaid"><code>graph TB
+    Customer([👤 Customer&lt;br/&gt;Phone Call / Message])
+
+    subgraph Twilio["☁️ Twilio Cloud"]
+        Phone[📱 Phone Number&lt;br/&gt;/ RCS / WhatsApp / Chat]
+        Orchestrator[💬 Conversation Orchestrator]
+        Memory[🧠 Conversation Memory]
+    end
+
+    subgraph GCP["☁️ Google Cloud"]
+        subgraph CloudRun["🏃 Cloud Run"]
+            Server[⚙️ TAC Server]
+        end
+
+        subgraph CES["🤖 CX Agent Studio"]
+            Agent[🧠 Deployed Agent]
+        end
+
+        Secret[🔐 Secret Manager&lt;br/&gt;Twilio credentials]
+    end
+
+    Customer --&gt;|Phone Call| Phone
+    Customer --&gt;|"Message&lt;br/&gt;(SMS/RCS/WhatsApp/Chat)"| Phone
+
+    %% Voice, cascaded (default): Twilio does the STT/TTS, text on the wire
+    Phone &lt;--&gt;|"ConversationRelay&lt;br/&gt;(text over wss://)"| Server
+    Server &lt;--&gt;|"runSession&lt;br/&gt;(text turns)"| Agent
+
+    %% Voice, speech-to-speech: raw audio on the wire, CX Agent Studio does the STT/TTS
+    Phone &lt;--&gt;|"Media Streams&lt;br/&gt;(raw audio over wss://)"| Server
+    Server &lt;--&gt;|"BidiRunSession&lt;br/&gt;(continuous audio)"| Agent
+
+    %% Messaging, same in both approaches
+    Phone &lt;--&gt; Orchestrator
+    Orchestrator &lt;--&gt;|"POST /webhook"| Server
+    Server --&gt;|"recall&lt;br/&gt;(cascaded voice + messaging only)"| Memory
+
+    Server -.-&gt;|reads credentials| Secret
+
+    linkStyle 2,3 stroke:#1a73e8,stroke-width:2px
+    linkStyle 4,5 stroke:#9c27b0,stroke-width:2px
+
+    style Customer fill:#e1f5ff
+    style Twilio fill:#f0f0f0
+    style GCP fill:#e8f0fe
+    style CloudRun fill:#e6f4ea
+    style CES fill:#f3e5f5
+    style Agent fill:#e1bee7
+    style Secret fill:#fff4e6</code></pre>
+<h2 id="deployment-components">Deployment Components<a class="headerlink" href="#deployment-components" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Agent</strong> - built and deployed in CX Agent Studio in the Google Cloud console; see <a href="./agent/"><code>agent/</code></a></li>
+<li><strong>Cloud Run Service</strong> - the TAC server (FastAPI); deployed from <a href="./server/"><code>server/</code></a></li>
+<li><strong>Artifact Registry</strong> - holds the server's container image (created automatically)</li>
+<li><strong>Secret Manager</strong> - holds the Twilio credentials, read by the Cloud Run service</li>
+</ul>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
+<h3 id="local-requirements">Local Requirements<a class="headerlink" href="#local-requirements" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Where</th>
+<th>Needed for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Google Cloud CLI</td>
+<td><a href="https://cloud.google.com/sdk/docs/install">install docs</a>, or <code>brew install --cask google-cloud-sdk</code></td>
+<td>every deploy step</td>
+</tr>
+<tr>
+<td>Python 3.11</td>
+<td><a href="https://www.python.org/downloads/">python.org</a></td>
+<td>only the optional debug client, <code>agent/invoke.py</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="google-cloud-requirements">Google Cloud Requirements<a class="headerlink" href="#google-cloud-requirements" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Where</th>
+<th>.env value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Project with billing and CX Agent Studio access</td>
+<td><a href="https://console.cloud.google.com">Cloud Console</a></td>
+<td><code>GOOGLE_CLOUD_PROJECT</code></td>
+</tr>
+<tr>
+<td>Region with Cloud Run availability</td>
+<td>any</td>
+<td><code>GOOGLE_CLOUD_LOCATION</code></td>
+</tr>
+<tr>
+<td>Deployed agent, <strong>Set up API access</strong> on its Deploy tab</td>
+<td><a href="agent/"><code>agent/README.md</code></a></td>
+<td><code>CX_AGENT_ID</code></td>
+</tr>
+</tbody>
+</table>
+<p>The deploy scripts handle API enablement and both service accounts.</p>
+<h3 id="twilio-requirements">Twilio Requirements<a class="headerlink" href="#twilio-requirements" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Where (<a href="https://1console.twilio.com">Twilio Console</a>)</th>
+<th>.env value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Account SID (starts <code>AC</code>)</td>
+<td>Console Dashboard</td>
+<td><code>TWILIO_ACCOUNT_SID</code></td>
+</tr>
+<tr>
+<td>Auth Token</td>
+<td><strong>Develop &gt; API Key &amp; creds &gt; API Keys &amp; auth tokens &gt; Auth Tokens</strong> tab</td>
+<td><code>TWILIO_AUTH_TOKEN</code></td>
+</tr>
+<tr>
+<td>API Key + Secret</td>
+<td>same page, <strong>API Keys</strong> tab, <strong>Create API Key</strong>. The secret shows once, so copy it now</td>
+<td><code>TWILIO_API_KEY</code> (starts <code>SK</code>), <code>TWILIO_API_SECRET</code></td>
+</tr>
+<tr>
+<td>Phone number, voice-capable (also SMS-capable if you want messaging)</td>
+<td><strong>Products &amp; services &gt; Numbers &amp; senders</strong></td>
+<td><code>TWILIO_PHONE_NUMBER</code> (E.164)</td>
+</tr>
+</tbody>
+</table>
+<p>That's everything voice needs.</p>
+<h4 id="optional">Optional<a class="headerlink" href="#optional" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Where</th>
+<th>.env value</th>
+<th>Enables</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Conversation Configuration</td>
+<td><a href="https://www.twilio.com/docs/conversations/orchestrator/quickstart#create-a-memory-store-and-conversation-configuration">Conversation Orchestrator quickstart</a></td>
+<td><code>TWILIO_CONVERSATION_CONFIGURATION_ID</code></td>
+<td>messaging and Conversation Memory; without it, voice only</td>
+</tr>
+<tr>
+<td>RCS sender</td>
+<td><strong>Products &amp; services &gt; Numbers &amp; senders</strong></td>
+<td><code>TWILIO_RCS_SENDER_ID</code></td>
+<td>the RCS channel</td>
+</tr>
+<tr>
+<td>WhatsApp sender</td>
+<td><strong>Products &amp; services &gt; Numbers &amp; senders</strong></td>
+<td><code>TWILIO_WHATSAPP_NUMBER</code> (<code>whatsapp:+1555...</code>)</td>
+<td>the WhatsApp channel</td>
+</tr>
+</tbody>
+</table>
+<p>Leave the Conversation Configuration's webhook blank for now. It needs the Cloud
+Run host, which you get after the first deploy
+(<a href="#configure-conversation-webhook-messaging">Twilio Configuration</a>).</p>
+<p>To message numbers beyond your own test numbers, SMS needs a registered brand
+and campaign and RCS needs carrier approval. Both go through Twilio and both
+block end-to-end testing, so start early.</p>
+<hr />
+<h2 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
+<h3 id="1-build-the-agent">1. Build the agent<a class="headerlink" href="#1-build-the-agent" title="Permanent link">&para;</a></h3>
+<p>Build and deploy the agent in CX Agent Studio and copy its resource name,
+following <a href="agent/"><code>agent/README.md</code></a>.</p>
+<h3 id="2-configure-environment">2. Configure Environment<a class="headerlink" href="#2-configure-environment" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>deploy/cx_agent_studio
+cp<span class="w"> </span>.env.example<span class="w"> </span>.env
+</code></pre></div>
+<p>Edit <code>.env</code> with your values:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># GCP Configuration</span>
+<span class="nv">GOOGLE_CLOUD_PROJECT</span><span class="o">=</span>your-project-id
+<span class="nv">GOOGLE_CLOUD_LOCATION</span><span class="o">=</span>your-region
+
+<span class="c1"># CX Agent Studio agent (from the console; location is the CX Agent Studio `us` multi-region)</span>
+<span class="nv">CX_AGENT_ID</span><span class="o">=</span>projects/your-project/locations/us/apps/your-app-id
+
+<span class="c1"># Twilio Credentials</span>
+<span class="nv">TWILIO_ACCOUNT_SID</span><span class="o">=</span>ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+<span class="nv">TWILIO_AUTH_TOKEN</span><span class="o">=</span>your_auth_token
+<span class="nv">TWILIO_API_KEY</span><span class="o">=</span>SKxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+<span class="nv">TWILIO_API_SECRET</span><span class="o">=</span>your_api_secret
+
+<span class="c1"># Twilio Configuration</span>
+<span class="nv">TWILIO_PHONE_NUMBER</span><span class="o">=</span>+1234567890
+<span class="nv">TWILIO_CONVERSATION_CONFIGURATION_ID</span><span class="o">=</span>conv_configuration_xxxx
+
+<span class="c1"># Optional: set either one to enable that messaging channel</span>
+<span class="nv">TWILIO_RCS_SENDER_ID</span><span class="o">=</span>rcs_sender_xxxxxxxxxxxxxxxxxx
+<span class="nv">TWILIO_WHATSAPP_NUMBER</span><span class="o">=</span>whatsapp:+1234567890
+</code></pre></div>
+<p>Console paths for all of these are in
+<a href="#twilio-requirements">Twilio Requirements</a>. The four credentials
+(<code>TWILIO_ACCOUNT_SID</code>, <code>TWILIO_AUTH_TOKEN</code>, <code>TWILIO_API_KEY</code>,
+<code>TWILIO_API_SECRET</code>) go into Secret Manager; the rest are passed as env vars.</p>
+<h3 id="3-authenticate-one-time">3. Authenticate (one-time)<a class="headerlink" href="#3-authenticate-one-time" title="Permanent link">&para;</a></h3>
+<p>Run once per machine; the credentials persist for future deploys. The project
+comes from <code>.env</code>, so you don't need <code>gcloud config set project</code>.</p>
+<div class="highlight"><pre><span></span><code>gcloud<span class="w"> </span>auth<span class="w"> </span>login<span class="w">                        </span><span class="c1"># gcloud CLI (server deploy)</span>
+gcloud<span class="w"> </span>auth<span class="w"> </span>application-default<span class="w"> </span>login<span class="w">    </span><span class="c1"># ADC (local invoke.py)</span>
+</code></pre></div>
+<h3 id="4-create-the-deploy-service-account-one-time">4. Create the deploy service account (one-time)<a class="headerlink" href="#4-create-the-deploy-service-account-one-time" title="Permanent link">&para;</a></h3>
+<p>Creates the <code>tac-deployer</code> SA, derived from your project, with nothing to
+configure. The deploy grants it the roles it needs.</p>
+<div class="highlight"><pre><span></span><code>make<span class="w"> </span>create-sa
+</code></pre></div>
+<h3 id="5-optional-switch-voice-approach">5. (Optional) Switch voice approach<a class="headerlink" href="#5-optional-switch-voice-approach" title="Permanent link">&para;</a></h3>
+<p><code>server/main.py</code> defaults to cascaded. For speech-to-speech, open it and follow
+the comments: comment out the "cascaded" block, uncomment the "s2s" block.
+Speech-to-speech voice supports neither Conversation Orchestrator nor
+Conversation Memory. Messaging keeps both either way.</p>
+<h3 id="6-deploy">6. Deploy<a class="headerlink" href="#6-deploy" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>make<span class="w"> </span>deploy-all
+</code></pre></div>
+<p><code>deploy-all</code> runs <code>deploy-secret</code>, then <code>deploy-server</code>. You can also run those
+individually.</p>
+<p><strong>Deployment output:</strong></p>
+<div class="highlight"><pre><span></span><code>✅ Deployed: https://tac-cx-server-xxxxx.&lt;region&gt;.run.app
+
+Configure Twilio:
+  Conversation Orchestrator status callback : https://tac-cx-server-xxxxx.&lt;region&gt;.run.app/webhook   (POST)
+  Voice "A call comes in" webhook           : https://tac-cx-server-xxxxx.&lt;region&gt;.run.app/twiml     (POST)
+</code></pre></div>
+<p>Copy those webhook URLs for the next section. Re-running <code>make deploy-server</code>
+keeps the same URL, including after switching cascaded/s2s.</p>
+<hr />
+<h2 id="twilio-configuration">Twilio Configuration<a class="headerlink" href="#twilio-configuration" title="Permanent link">&para;</a></h2>
+<h3 id="configure-voice-webhook-phone-number">Configure Voice Webhook (Phone Number)<a class="headerlink" href="#configure-voice-webhook-phone-number" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Go to <strong>Products &amp; services &gt; Numbers &amp; senders</strong></li>
+<li>Select your phone number</li>
+<li>Under <strong>Voice configuration</strong>, set the primary handler:</li>
+<li><strong>A CALL COMES IN:</strong> Webhook</li>
+<li><strong>URL:</strong> the <code>/twiml</code> URL from the deploy output</li>
+<li><strong>HTTP Method:</strong> POST</li>
+<li>Save</li>
+</ol>
+<p>Both voice approaches use this same <code>/twiml</code> webhook, so there's nothing to
+change here when you switch.</p>
+<h3 id="configure-conversation-webhook-messaging">Configure Conversation Webhook (Messaging)<a class="headerlink" href="#configure-conversation-webhook-messaging" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Go to <strong>Products &amp; services &gt; Conversation Orchestrator &gt; Conversation Configurations</strong></li>
+<li>Select your Conversation Configuration and click <strong>Edit</strong></li>
+<li>Under <strong>Webhook</strong>, set the callback URL to the <code>/webhook</code> URL from the deploy
+   output, method POST</li>
+<li>Save</li>
+</ol>
+<p>If you created the configuration via the API with <code>statusCallbacks</code> already
+pointing at your Cloud Run URL, this is done already.</p>
+<p>Messaging flows through the Conversation Orchestrator status callback, <strong>not</strong> the
+phone number's "A message comes in" webhook. Setting that one does nothing here.
+This single webhook covers SMS, Chat, RCS, and WhatsApp.</p>
+<hr />
+<h2 id="view-logs">View Logs<a class="headerlink" href="#view-logs" title="Permanent link">&para;</a></h2>
+<h3 id="cloud-run-logs">Cloud Run Logs<a class="headerlink" href="#cloud-run-logs" title="Permanent link">&para;</a></h3>
+<p>Application logs (startup, agent calls, errors):</p>
+<div class="highlight"><pre><span></span><code>gcloud<span class="w"> </span>run<span class="w"> </span>services<span class="w"> </span>logs<span class="w"> </span><span class="nb">read</span><span class="w"> </span>tac-cx-server<span class="w"> </span>--project<span class="w"> </span>your-project-id<span class="w"> </span>--region<span class="w"> </span>your-region<span class="w"> </span>--limit<span class="w"> </span><span class="m">50</span>
+</code></pre></div>
+<p>Or go to the <a href="https://console.cloud.google.com/logs">Cloud Logging Console</a>, and filter by <strong>Cloud Run Revision → <code>tac-cx-server</code></strong>.</p>
+<h3 id="request-logs">Request Logs<a class="headerlink" href="#request-logs" title="Permanent link">&para;</a></h3>
+<p>To confirm whether Twilio's webhook is <strong>reaching</strong> the service (and with what status code):</p>
+<div class="highlight"><pre><span></span><code>gcloud<span class="w"> </span>logging<span class="w"> </span><span class="nb">read</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s1">'resource.type="cloud_run_revision" AND resource.labels.service_name="tac-cx-server" AND httpRequest.requestUrl!=""'</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--project<span class="w"> </span>your-project-id<span class="w"> </span>--limit<span class="w"> </span><span class="m">25</span><span class="w"> </span>--freshness<span class="o">=</span>1h<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--format<span class="o">=</span><span class="s1">'table(timestamp, httpRequest.requestMethod, httpRequest.status, httpRequest.requestUrl)'</span>
+</code></pre></div>
+<hr />
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Every webhook 403s</td>
+<td><code>TWILIO_AUTH_TOKEN</code> doesn't belong to <code>TWILIO_ACCOUNT_SID</code>. Usually the token was rotated without re-running <code>make deploy-secret</code>, or the two come from different (sub)accounts. The <a href="#request-logs">request log query</a> shows these.</td>
+</tr>
+<tr>
+<td>Calls connect, nobody speaks</td>
+<td><code>TWILIO_VOICE_PUBLIC_DOMAIN</code> was overridden in <code>.env</code>. The deploy sets it to the Cloud Run host, so an override points Twilio's <code>wss://</code> at the wrong place. Cloud Run logs show no WebSocket connection at all.</td>
+</tr>
+<tr>
+<td>Messages reach Twilio, agent never replies</td>
+<td>No <code>TWILIO_CONVERSATION_CONFIGURATION_ID</code> set, so messaging was never enabled; or the configuration's webhook isn't <code>/webhook</code>; or the channel has no capture rule in the Conversation Configuration (WhatsApp is the common miss); or the channel isn't registered in <code>server/main.py</code>, in which case it's dropped silently.</td>
+</tr>
+<tr>
+<td>RCS/WhatsApp works for your number only</td>
+<td>The approval gate, not a bug. See <a href="#optional">Twilio Requirements</a>.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="update-code">Update Code<a class="headerlink" href="#update-code" title="Permanent link">&para;</a></h2>
+<ul>
+<li>After editing the agent: rebuild/redeploy it in CX Agent Studio.</li>
+<li>After editing the server or the package (including switching cascaded/s2s): <code>make deploy-server</code>.</li>
+<li>After rotating Twilio credentials in <code>.env</code>: <code>make deploy-secret</code>.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; Twilio
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "navigation.instant", "content.code.copy", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

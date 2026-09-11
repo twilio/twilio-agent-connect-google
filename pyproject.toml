@@ -1,6 +1,6 @@
 [project]
 name = "twilio-agent-connect-google"
-version = "0.1.0"
+version = "1.0.0"
 description = "Google Cloud integrations for Twilio Agent Connect (TAC) - connectors for Google Cloud agent runtimes"
 readme = "README.md"
 requires-python = ">=3.10,<3.12"

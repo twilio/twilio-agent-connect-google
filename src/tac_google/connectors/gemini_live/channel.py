@@ -17,7 +17,7 @@ from tac.channels.base import BaseChannel
 from tac.channels.websocket_protocol import WebSocketDisconnectError, WebSocketProtocol
 from tac.core.logging import get_logger
 from tac.core.tac import TAC
-from twilio.twiml.voice_response import Connect, VoiceResponse
+from twilio.twiml.voice_response import VoiceResponse
 
 from tac_google.connectors.gemini_live.audio import (
     gemini_pcm_to_twilio_mulaw,
@@ -90,13 +90,22 @@ class GeminiLiveChannel(BaseChannel):
         connect.stream(url=resolved_websocket_url)
         return str(response)
 
-    async def process_webhook(self, data: dict[str, Any]) -> None:
-        """No-op; satisfies BaseChannel interface."""
-        return
+    async def process_webhook(
+        self, webhook_data: dict[str, Any], idempotency_token: str | None = None
+    ) -> None:
+        """Not used — S2S has no Conversation Orchestrator text-turn webhook."""
+        logger.debug("process_webhook is a no-op for GeminiLiveChannel", data=webhook_data)
 
-    async def send_response(self, conversation_id: str, text: str) -> None:
-        """No-op; satisfies BaseChannel interface."""
-        return
+    async def send_response(
+        self,
+        conversation_id: str,
+        response: Any,
+        role: str | None = None,
+    ) -> None:
+        """Not used — audio is exchanged directly over the media-stream websocket."""
+        raise NotImplementedError(
+            "GeminiLiveChannel exchanges audio directly over the media-stream websocket."
+        )
 
     async def handle_media_stream(self, websocket: WebSocketProtocol) -> None:
         """Main WebSocket loop bridging Twilio Media Streams and Gemini Live session."""
@@ -104,7 +113,6 @@ class GeminiLiveChannel(BaseChannel):
 
         conv_id: str | None = None
         stream_sid: str | None = None
-        live_session: Any = None
         twilio_to_gemini_state: Any = None
         gemini_to_twilio_state: Any = None
         session_ready = asyncio.Event()
@@ -125,7 +133,7 @@ class GeminiLiveChannel(BaseChannel):
 
         if self.config.system_instruction:
             live_config.system_instruction = types.Content(
-                parts=[types.Part.from_text(self.config.system_instruction)]
+                parts=[types.Part.from_text(text=self.config.system_instruction)]
             )
 
         if self.config.tools:
@@ -215,16 +223,10 @@ class GeminiLiveChannel(BaseChannel):
                         parts = getattr(model_turn, "parts", []) or []
                         for part in parts:
                             inline_data = getattr(part, "inline_data", None)
-                            if (
-                                inline_data
-                                and getattr(inline_data, "data", None)
-                                and stream_sid
-                            ):
+                            if inline_data and getattr(inline_data, "data", None) and stream_sid:
                                 pcm_chunk = inline_data.data
-                                b64_payload, gemini_to_twilio_state = (
-                                    gemini_pcm_to_twilio_mulaw(
-                                        pcm_chunk, gemini_to_twilio_state
-                                    )
+                                b64_payload, gemini_to_twilio_state = gemini_pcm_to_twilio_mulaw(
+                                    pcm_chunk, gemini_to_twilio_state
                                 )
                                 await websocket.send_text(
                                     json.dumps(
@@ -257,16 +259,13 @@ class GeminiLiveChannel(BaseChannel):
                         function_responses.append(resp_item)
 
                     if function_responses:
-                        await session.send_tool_response(
-                            function_responses=function_responses
-                        )
+                        await session.send_tool_response(function_responses=function_responses)
 
         try:
             async with client.aio.live.connect(
                 model=self.config.model,
                 config=live_config,
             ) as session:
-                live_session = session
                 twilio_task = asyncio.create_task(forward_twilio_to_live(session))
                 live_task = asyncio.create_task(forward_live_to_twilio(session))
 
@@ -289,8 +288,11 @@ class GeminiLiveChannel(BaseChannel):
         except WebSocketDisconnectError:
             logger.info("Twilio media stream disconnected normally", conversation_id=conv_id)
         except Exception as e:
-            logger.error("Error in Gemini Live S2S media stream", error=str(e), traceback=traceback.format_exc())
+            logger.error(
+                "Error in Gemini Live S2S media stream",
+                error=str(e),
+                traceback=traceback.format_exc(),
+            )
         finally:
             if conv_id:
                 await self._end_conversation(conv_id)
-                await self.tac.trigger_conversation_ended(conv_id)

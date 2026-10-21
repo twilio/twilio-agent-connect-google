@@ -32,7 +32,7 @@ class GeminiLiveConnector:
         self.config = config
 
         self.channel = GeminiLiveChannel(tac=self.tac, config=self.config)
-        self.tac.register_channel(self.channel)
+        self.voice_s2s = self.channel
 
         logger.info(
             "GeminiLiveConnector initialized",

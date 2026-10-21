@@ -4,7 +4,7 @@ import base64
 import json
 from types import SimpleNamespace
 from typing import Any
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from tac.channels.websocket_protocol import WebSocketDisconnectError
@@ -92,9 +92,10 @@ def test_channel_twiml():
         )
     )
     import asyncio
+
     twiml = asyncio.run(channel.handle_incoming_call())
     assert "<Stream" in twiml
-    assert "url=\"wss://example.com/ws/live\"" in twiml
+    assert 'url="wss://example.com/ws/live"' in twiml
 
 
 @pytest.mark.asyncio
@@ -102,17 +103,19 @@ async def test_channel_barge_in_and_audio_flow():
     channel = make_bare_channel()
 
     # Twilio sends start, then media, then stop
-    twilio_ws = FakeTwilioWebSocket([
-        {
-            "event": "start",
-            "start": {"streamSid": "MZ123", "callSid": "CA123"},
-        },
-        {
-            "event": "media",
-            "media": {"payload": base64.b64encode(b"\x00" * 160).decode("ascii")},
-        },
-        {"event": "stop"},
-    ])
+    twilio_ws = FakeTwilioWebSocket(
+        [
+            {
+                "event": "start",
+                "start": {"streamSid": "MZ123", "callSid": "CA123"},
+            },
+            {
+                "event": "media",
+                "media": {"payload": base64.b64encode(b"\x00" * 160).decode("ascii")},
+            },
+            {"event": "stop"},
+        ]
+    )
 
     # Fake server content containing audio and an interruption signal
     fake_audio_part = SimpleNamespace(
@@ -139,8 +142,8 @@ async def test_channel_barge_in_and_audio_flow():
     fake_session = FakeLiveSession([fake_response_turn, fake_interrupt_turn])
 
     class FakeClient:
-        class aio:
-            class live:
+        class aio:  # noqa: N801
+            class live:  # noqa: N801
                 @staticmethod
                 def connect(*args, **kwargs):
                     class _Ctx:

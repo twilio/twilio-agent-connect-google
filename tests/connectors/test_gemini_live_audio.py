@@ -4,8 +4,6 @@ import audioop
 import base64
 
 from tac_google.connectors.gemini_live.audio import (
-    GEMINI_LIVE_AUDIO_SAMPLE_RATE,
-    TWILIO_AUDIO_SAMPLE_RATE,
     gemini_pcm_to_twilio_mulaw,
     twilio_mulaw_to_gemini_pcm,
 )

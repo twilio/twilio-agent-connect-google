@@ -1,13 +1,10 @@
 """Tests for GeminiLiveConnector and tool execution."""
 
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import patch
 
 import pytest
-from tac.channels.websocket_protocol import WebSocketDisconnectError
-from tac.core.logging import get_logger
 
-from tac_google.connectors.gemini_live.channel import GeminiLiveChannel
 from tac_google.connectors.gemini_live.config import GeminiLiveConfig
 from tac_google.connectors.gemini_live.connector import GeminiLiveConnector
 from tests.connectors.test_gemini_live_channel import (
@@ -33,10 +30,12 @@ async def test_tool_dispatch_execution():
     )
     channel = make_bare_channel(config)
 
-    twilio_ws = FakeTwilioWebSocket([
-        {"event": "start", "start": {"streamSid": "MZ1", "callSid": "CA1"}},
-        {"event": "stop"},
-    ])
+    twilio_ws = FakeTwilioWebSocket(
+        [
+            {"event": "start", "start": {"streamSid": "MZ1", "callSid": "CA1"}},
+            {"event": "stop"},
+        ]
+    )
 
     fake_tool_call_part = SimpleNamespace(
         name="verify_order",
@@ -51,8 +50,8 @@ async def test_tool_dispatch_execution():
     fake_session = FakeLiveSession([fake_tool_response])
 
     class FakeClient:
-        class aio:
-            class live:
+        class aio:  # noqa: N801
+            class live:  # noqa: N801
                 @staticmethod
                 def connect(*args, **kwargs):
                     class _Ctx:
@@ -76,12 +75,11 @@ async def test_tool_dispatch_execution():
 
 def test_gemini_live_connector_init():
     mock_tac = SimpleNamespace(
-        register_channel=Mock(),
         config=SimpleNamespace(voice_public_domain="example.com", voice_websocket_path="/ws/live"),
     )
     config = GeminiLiveConfig(project_id="test-p")
     connector = GeminiLiveConnector(tac=mock_tac, config=config)
 
     assert connector.channel is not None
+    assert connector.voice_s2s is connector.channel
     assert connector.config == config
-    mock_tac.register_channel.assert_called_once_with(connector.channel)

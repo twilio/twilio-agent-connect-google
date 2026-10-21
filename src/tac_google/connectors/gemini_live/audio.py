@@ -14,7 +14,7 @@ from typing import Any
 TWILIO_AUDIO_SAMPLE_RATE = 8000
 GEMINI_LIVE_AUDIO_SAMPLE_RATE = 24000
 SAMPLE_WIDTH = 2  # 16-bit linear PCM
-CHANNELS = 1      # Mono
+CHANNELS = 1  # Mono
 
 
 def twilio_mulaw_to_gemini_pcm(

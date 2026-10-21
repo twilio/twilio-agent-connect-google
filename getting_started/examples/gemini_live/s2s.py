@@ -27,8 +27,9 @@ from typing import Any
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, WebSocket
+from fastapi.responses import Response
 from tac import TAC, TACConfig
-from tac.channels.websocket_protocol import FastAPIWebSocket
+from tac.server import FastAPIWebSocketAdapter
 
 from tac_google.connectors import GeminiLiveConfig, GeminiLiveConnector
 
@@ -82,16 +83,14 @@ app = FastAPI()
 
 
 @app.post("/voice/incoming")
-async def voice_incoming():
+async def voice_incoming() -> Response:
     twiml = await connector.channel.handle_incoming_call()
-    from fastapi.responses import Response
-
     return Response(content=twiml, media_type="application/xml")
 
 
 @app.websocket("/ws/live")
-async def websocket_media_stream(websocket: WebSocket):
-    protocol = FastAPIWebSocket(websocket)
+async def websocket_media_stream(websocket: WebSocket) -> None:
+    protocol = FastAPIWebSocketAdapter(websocket)
     await connector.channel.handle_media_stream(protocol)
 
 

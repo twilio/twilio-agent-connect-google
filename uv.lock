@@ -2,8 +2,8 @@ version = 1
 revision = 3
 requires-python = ">=3.10, <3.12"
 resolution-markers = [
-    "python_full_version < '3.11'",
     "python_full_version >= '3.11'",
+    "python_full_version < '3.11'",
 ]
 
 [[package]]
@@ -2221,11 +2221,11 @@ docs = [
 
 [[package]]
 name = "types-google-cloud-ndb"
-version = "2.4.0.20260518"
+version = "2.4.0.20260906"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/56/d9/cefe3e65ec898067ad34fda22d164238495a498e7f50e0cbcd2d4baa36a4/types_google_cloud_ndb-2.4.0.20260518.tar.gz", hash = "sha256:dbe7649154a3863b54a8f9d92e73951bd77c05a5b574aa6ec2883b5a3e96241f", size = 20071, upload-time = "2026-05-18T06:02:51.991Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/31/fd/363fe5f9c0d0afe28928ab0ae6611ffc250358f1b9f233644e3587f55aaa/types_google_cloud_ndb-2.4.0.20260906.tar.gz", hash = "sha256:3788595787d7f55c6b7ea95cc6a431ebf1d59cb7db74ecfabe7e5b078ba71935", size = 20392, upload-time = "2026-09-06T06:35:21.064Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/bd/47/dc025136b15b0c5798b6c5834e1d15f5553c70688c8f2a3b5125f2dc0c53/types_google_cloud_ndb-2.4.0.20260518-py3-none-any.whl", hash = "sha256:fec60a8448a8aa290535c381c090b23a92c05516b09a3e5c2ab8124dc590c86e", size = 22970, upload-time = "2026-05-18T06:02:51.172Z" },
+    { url = "https://files.pythonhosted.org/packages/fa/a6/1cf439926102272c353758c50619a37524866ebe19e80ec4cf6b79417498/types_google_cloud_ndb-2.4.0.20260906-py3-none-any.whl", hash = "sha256:9e5fe73d2307644ab44cb90c7ec5d960b12a4d52fed8e28b31d1444b63cd1e78", size = 23015, upload-time = "2026-09-06T06:35:20.168Z" },
 ]
 
 [[package]]

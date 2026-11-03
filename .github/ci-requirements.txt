@@ -15,4 +15,4 @@
 # new version is actually mirrored in Artifactory (re-run this workflow) —
 # Dependabot only checks PyPI, not Artifactory's mirror status.
 twine==6.2.0
-jaraco.functools==4.5.0
+jaraco.functools==4.6.0

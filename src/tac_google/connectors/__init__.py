@@ -12,11 +12,19 @@ from tac_google.connectors.cx_agent_studio import (
     VoiceS2SChannel,
     VoiceS2SConfig,
 )
+from tac_google.connectors.gemini_live import (
+    GeminiLiveChannel,
+    GeminiLiveConfig,
+    GeminiLiveConnector,
+)
 
 __all__ = [
     "ADKAgentEngineConnector",
     "ConversationalAgentsConnector",
     "CXAgentStudioConnector",
+    "GeminiLiveChannel",
+    "GeminiLiveConfig",
+    "GeminiLiveConnector",
     "StudioAgentEngineConnector",
     "VoiceS2SChannel",
     "VoiceS2SConfig",

@@ -32,7 +32,7 @@ server = [
 
 # Vertex AI connector (Gemini models)
 vertex-ai = [
-    "google-cloud-aiplatform[reasoningengine,agent-engines]>=1.148.1,<2",
+    "google-cloud-aiplatform[reasoningengine,agent-engines]>=1.148.1,<3",
     "google-genai>=2.9,<3",
     "google-auth>=2,<3",
 ]
@@ -55,7 +55,7 @@ conversational-agents = [
 # Development dependencies (includes all runtime features and Google Cloud SDKs)
 dev = [
     # Google Cloud SDK dependencies
-    "google-cloud-aiplatform[agent-engines]>=1.148.1,<2",
+    "google-cloud-aiplatform[agent-engines]>=1.148.1,<3",
     "google-genai>=2.9,<3",
     "google-adk[a2a]>=2.2.0,<2.3",
     # Server dependencies (via TAC core)

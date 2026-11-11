@@ -108,5 +108,15 @@ To ensure consistency throughout the source code, keep these rules in mind as yo
 - **Python Version** - Target Python 3.10 and 3.11. Use modern syntax (type unions with `|`, etc.).
 - **Validation** - Use [Pydantic](https://docs.pydantic.dev/) for runtime validation and type inference.
 - **Optional Dependencies** - Each connector's Google Cloud dependencies live behind its own extra (`vertex-ai`, `cx-agent-studio`, `conversational-agents`). Keep imports of those SDKs inside the connector that needs them so installing one extra doesn't pull in the others.
+- **uv Version** - The repo pins uv `0.9.26` (`[tool.uv] required-version` in `pyproject.toml`) so `uv.lock` keeps the same format as CI. If your installed uv differs, prefix commands with `uvx --from uv==0.9.26`, e.g. `uvx --from uv==0.9.26 uv lock`.
+
+## SDK Compatibility Checks
+
+`make check` runs against the `twilio-agent-connect` version in `uv.lock`. CI also runs ruff, mypy and pytest against the latest patch of every SDK minor allowed by the `twilio-agent-connect` range in `pyproject.toml`, as the `TAC Compat - <version>` jobs.
+
+If one of those jobs fails, its job summary shows the commands to reproduce it locally. Then either:
+
+1. Keep supporting that version: avoid or guard the SDK API that is missing or different there.
+2. Drop it on purpose: raise the lower bound of every `twilio-agent-connect` requirement in `pyproject.toml` and run `uvx --from uv==0.9.26 uv lock`. The matrix follows the new range automatically.
 
 [github]: https://github.com/twilio/twilio-agent-connect-google

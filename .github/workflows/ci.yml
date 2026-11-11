@@ -197,6 +197,9 @@ jobs:
   discover-tac-versions:
     name: Discover TAC Versions
     runs-on: ${{ github.event.pull_request.head.repo.fork && 'ubuntu-latest-large' || 'ubuntu-x64' }}
+    permissions:
+      contents: read
+      id-token: write
     outputs:
       versions: ${{ steps.discover.outputs.versions }}
     steps:
@@ -229,6 +232,9 @@ jobs:
     name: TAC Compat - ${{ matrix.tac }}
     needs: discover-tac-versions
     runs-on: ${{ github.event.pull_request.head.repo.fork && 'ubuntu-latest-large' || 'ubuntu-x64' }}
+    permissions:
+      contents: read
+      id-token: write
     strategy:
       fail-fast: false
       matrix:

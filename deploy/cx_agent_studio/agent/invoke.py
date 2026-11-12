@@ -33,7 +33,9 @@ def extract_text(data: dict) -> str:
 def main():
     agent_id = os.getenv("CX_AGENT_ID")
     if not agent_id:
-        print("\n❌ Error: CX_AGENT_ID not set — build and deploy an agent in CX Agent Studio first (see README.md)")
+        print(
+            "\n❌ Error: CX_AGENT_ID not set — build and deploy an agent in CX Agent Studio first (see README.md)"
+        )
         return
     agent_id = agent_id.rstrip("/")
 

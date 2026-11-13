@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+Keep it accurate: when a change alters anything described here (behavior, commands, layout, CI), update this file in the same PR.
+
 ## Project Overview
 
 twilio-agent-connect-google is an open-source library providing Google Cloud integrations for Twilio Agent Connect (TAC). It contains connectors that combine a Google Cloud agent runtime integration with multi-channel conversation management.
@@ -31,7 +33,7 @@ make check             # All checks (lint + type-check + test)
 uv run --group docs mkdocs build --strict   # Build the docs site (fails on broken links)
 ```
 
-Lint, format and mypy cover `src/tac_google` and `getting_started`; pytest covers `tests/`.
+Lint and format run ruff over the whole repo; mypy covers `src/tac_google` and `getting_started`; pytest covers `tests/`.
 
 ## Package Structure
 
@@ -100,7 +102,7 @@ Connectors combine agent runtime integration with channel management. Each one:
 
 **ConnectorChannels** (`connectors/_channels.py`): shared builder for SMS, Chat, RCS and WhatsApp. Voice is built by each connector itself because `CXAgentStudioConnector` has to choose between two voice channel types.
 
-**ADKAgentEngineConnector**: ADK agent on Agent Platform Runtime. Creates one session per conversation over REST (for a clean "already exists" signal) and calls `async_stream_query()` per message. Memory is wrapped in `<MEMORY>` ahead of the user text, which is wrapped in `<USER_MESSAGE>`, on every message, because the API has a single content channel.
+**ADKAgentEngineConnector**: ADK agent on Agent Platform Runtime. Creates one session per conversation over REST (for a clean "already exists" signal) and calls `async_stream_query()` per message. Memory is wrapped in `<MEMORY>` ahead of the user text, which is wrapped in `<USER_MESSAGE>`, because the API has a single content channel. The session replays full history, so memory is injected only when it changes between turns (`_maybe_tag_message` in `_base.py`).
 
 **StudioAgentEngineConnector**: Agent Studio app on Agent Platform Runtime. Same session handling as the ADK connector, but invokes the `:streamQuery` REST endpoint directly since Studio apps have no SDK-bound query methods. Memory is injected the same way.
 
@@ -198,7 +200,7 @@ Tests live in `tests/connectors/` and use pytest with `@pytest.mark.asyncio` for
 - Mock Google clients and `AuthorizedSession` rather than calling Google APIs
 - Build a `TAC` stand-in with a `config` attribute when a channel reads `tac.config`; newer TAC releases read more of it
 
-CI's `TAC Compat` matrix also runs lint, mypy and tests against the latest patch of each `twilio-agent-connect` minor in the `pyproject.toml` range (`.github/scripts/tac_versions.py`), so code must work on the oldest supported minor, not just the locked one. The matrix runs on Python 3.11, the newest version this package supports. Reproduce and fix steps: CONTRIBUTING.md, "SDK Compatibility Checks".
+CI's `TAC Compat` matrix also runs lint, mypy and tests against the latest patch of each `twilio-agent-connect` minor in the `pyproject.toml` range (`.github/scripts/tac_versions.py`), so code must work on the oldest supported minor, not just the locked one. The matrix runs on Python 3.10, the oldest version this package supports. Reproduce and fix steps: CONTRIBUTING.md, "SDK Compatibility Checks".
 
 ## Documentation
 

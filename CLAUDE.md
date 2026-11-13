@@ -32,7 +32,9 @@ make lint              # Lint check only
 make type-check        # mypy (disallow_untyped_defs)
 make test              # Run pytest
 make check             # All checks (lint + type-check + test)
-uv run --group docs mkdocs build --strict   # Build the docs site (fails on broken links)
+make docs              # Build the docs site into site/ (--strict, fails on broken links)
+make docs-serve        # Serve docs locally with live reload
+make docs-versions     # List versioned docs published to gh-pages
 ```
 
 Lint and format run ruff over the whole repo; mypy covers `src/tac_google` and `getting_started`; pytest covers `tests/`.
@@ -224,7 +226,7 @@ Raising the lower bound drops older minors from the `TAC Compat` matrix, so only
 - TAC core types (`TAC`, `ConversationSession`, ...) resolve to the TAC Python docs via the `inventories` entry in `mkdocs.yml`, so annotating with real TAC types produces cross-repo links.
 - `docs/api/*.md` targets individual modules, not the top-level package. When you add a module, add it to the matching docs page.
 - `docs/index.md` and `docs/deploy/**` are one-line snippet includes of `README.md` and the `deploy/` guides. Edit the source Markdown, never the stub, and use absolute GitHub URLs for repo-only paths in those files.
-- Verify docs changes with `uv run --group docs mkdocs build --strict`.
+- Verify docs changes with `make docs` (`uv run --group docs mkdocs build --strict`).
 
 ## Common Pitfalls
 

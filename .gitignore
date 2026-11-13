@@ -183,3 +183,6 @@ Makefile.local
 *.json.gcp
 gcloud-credentials.json
 service-account-key.json
+
+# mkdocs documentation
+/site

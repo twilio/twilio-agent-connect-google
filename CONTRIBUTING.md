@@ -109,4 +109,13 @@ To ensure consistency throughout the source code, keep these rules in mind as yo
 - **Validation** - Use [Pydantic](https://docs.pydantic.dev/) for runtime validation and type inference.
 - **Optional Dependencies** - Each connector's Google Cloud dependencies live behind its own extra (`vertex-ai`, `cx-agent-studio`, `conversational-agents`). Keep imports of those SDKs inside the connector that needs them so installing one extra doesn't pull in the others.
 
+## SDK Compatibility Checks
+
+`make check` runs against the `twilio-agent-connect` version in `uv.lock`. CI runs the same `make lint`, `make type-check` and `make test` targets against that version, and again, as the `TAC Compat - <version>` jobs, against the latest patch of every SDK minor allowed by the `twilio-agent-connect` range in `pyproject.toml`.
+
+If one of those jobs fails, its job summary shows the commands to reproduce it locally. Then either:
+
+1. Keep supporting that version: avoid or guard the SDK API that is missing or different there.
+2. Drop it on purpose: raise the lower bound of every `twilio-agent-connect` requirement in `pyproject.toml` and run `uv lock`. The matrix follows the new range automatically.
+
 [github]: https://github.com/twilio/twilio-agent-connect-google

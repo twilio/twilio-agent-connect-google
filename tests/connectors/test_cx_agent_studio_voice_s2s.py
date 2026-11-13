@@ -28,7 +28,10 @@ def make_bare_channel(deployment_id: str | None = None) -> VoiceS2SChannel:
     channel._project_id = "p"
     channel._conversations = {}
     channel.logger = get_logger(VoiceS2SChannel.__module__)
-    channel.tac = SimpleNamespace(trigger_conversation_ended=AsyncMock())
+    channel.tac = SimpleNamespace(
+        config=SimpleNamespace(account_sid="ACtest"),
+        trigger_conversation_ended=AsyncMock(),
+    )
     channel._get_access_token = AsyncMock(return_value="test-token")  # type: ignore[method-assign]
     return channel
 

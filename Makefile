@@ -25,12 +25,13 @@ dev-setup: sync
 
 format:
 	@echo "Formatting code with ruff..."
-	uv run ruff format src/tac_google getting_started
-	uv run ruff check --fix src/tac_google getting_started
+	uv run ruff format .
+	uv run ruff check --fix .
 
 lint:
 	@echo "Running lint checks..."
-	uv run ruff check src/tac_google getting_started
+	uv run ruff check .
+	uv run ruff format --check .
 
 type-check:
 	@echo "Running mypy type checking..."

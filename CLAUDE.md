@@ -199,16 +199,28 @@ server = CXAgentStudioFastAPIServer(
 
 Tests live in `tests/connectors/` and use pytest with `@pytest.mark.asyncio` for async tests (see `pytest.ini`). Run with `make test` or `uv run pytest`. Tests should:
 - Import from `tac_google` (local) and `tac` (external dependency)
-- Mock Google clients and `AuthorizedSession` rather than calling Google APIs
+- Mock Google clients and `AuthorizedSession` with pytest fixtures rather than calling Google APIs
 - Build a `TAC` stand-in with a `config` attribute when a channel reads `tac.config`; newer TAC releases read more of it
 
 CI's `TAC Compat` matrix also runs lint, mypy and tests against the latest patch of each `twilio-agent-connect` minor in the `pyproject.toml` range (`.github/scripts/tac_versions.py`), so code must work on the oldest supported minor, not just the locked one. The matrix runs on Python 3.10, the oldest version this package supports. Reproduce and fix steps: CONTRIBUTING.md, "SDK Compatibility Checks".
 
+## Updating TAC Dependency
+
+When a new `twilio-agent-connect` release is published to PyPI, bump every `twilio-agent-connect` constraint in `pyproject.toml` together (base dependency and each extra that pulls it), then re-lock and run all checks:
+
+```bash
+make sync
+make check
+```
+
+Raising the lower bound drops older minors from the `TAC Compat` matrix, so only raise it when code needs a newer TAC feature.
+
 ## Documentation
 
-- The public API reference is published at https://twilio.github.io/twilio-agent-connect-google/, versioned with `mike` and deployed from `.github/workflows/docs.yml`.
+- The public API reference is published at https://twilio.github.io/twilio-agent-connect-google/, versioned with `mike` and deployed from `.github/workflows/docs.yml` on each GitHub release.
 - API docs are generated from docstrings by MkDocs Material + mkdocstrings, so **docstrings are published documentation**. Write them for both source readers and the rendered site.
 - Use **Markdown** in docstrings: `**bold**`, `- ` bullet lists, backticks for identifiers, and fenced code blocks for examples, with a blank line before a list or fenced block.
+- TAC core types (`TAC`, `ConversationSession`, ...) resolve to the TAC Python docs via the `inventories` entry in `mkdocs.yml`, so annotating with real TAC types produces cross-repo links.
 - `docs/api/*.md` targets individual modules, not the top-level package. When you add a module, add it to the matching docs page.
 - `docs/index.md` and `docs/deploy/**` are one-line snippet includes of `README.md` and the `deploy/` guides. Edit the source Markdown, never the stub, and use absolute GitHub URLs for repo-only paths in those files.
 - Verify docs changes with `uv run --group docs mkdocs build --strict`.
@@ -219,14 +231,16 @@ CI's `TAC Compat` matrix also runs lint, mypy and tests against the latest patch
 2. **Don't copy TAC source code** - TAC is a dependency, not vendored.
 3. **Don't pass `None` channels to a server** - `connector.rcs` and `connector.whatsapp` are `None` when not configured.
 4. **Connectors own the channels** - don't create separate channel instances for them.
-5. **Python 3.12 is not supported** - `requires-python` is `<3.12`.
-6. **Optional dependencies are gated** - each connector needs its own extra installed.
+5. **Optional dependencies are gated** - each connector needs its own extra installed.
+6. **Python 3.12 is not supported** - `requires-python` is `<3.12`.
 
 ## Related Documentation
 
 - TAC Core: [twilio-agent-connect-python](https://github.com/twilio/twilio-agent-connect-python)
 - TAC AWS sibling: [twilio-agent-connect-aws](https://github.com/twilio/twilio-agent-connect-aws)
 - TAC Microsoft sibling: [twilio-agent-connect-microsoft](https://github.com/twilio/twilio-agent-connect-microsoft)
+- Google ADK: [google.github.io/adk-docs](https://google.github.io/adk-docs/)
+- Dialogflow CX: [cloud.google.com/dialogflow/cx/docs](https://cloud.google.com/dialogflow/cx/docs)
 - Examples: `getting_started/examples/`
 - Deployment: `deploy/README.md`
 - Published API reference: [twilio.github.io/twilio-agent-connect-google](https://twilio.github.io/twilio-agent-connect-google/)

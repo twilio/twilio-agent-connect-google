@@ -4,6 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Keep it accurate: when a change alters anything described here (behavior, commands, layout, CI), update this file in the same PR.
 
+If a PR, including later pushes to it, conflicts with anything in this file, the PR must also update this file to match before it merges.
+
 ## Project Overview
 
 twilio-agent-connect-google is an open-source library providing Google Cloud integrations for Twilio Agent Connect (TAC). It contains connectors that combine a Google Cloud agent runtime integration with multi-channel conversation management.

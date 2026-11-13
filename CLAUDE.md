@@ -112,7 +112,7 @@ Connectors combine agent runtime integration with channel management. Each one:
 
 **ConversationalAgentsConnector**: Dialogflow CX agents (Playbook or Flow) over the `detectIntent` v3 REST API. Derives one stable session id per conversation (a UUID hash of the TAC conversation id, to fit Dialogflow's 36-character limit). Memory is injected only when it changes, like the CES connector.
 
-**VoiceS2SChannel**: Native speech-to-speech voice for CES. Bridges Twilio Media Streams audio to CES `BidiRunSession`, with CES doing its own STT/TTS. There are no discrete turns, so `process_webhook` and `send_response` are no-ops, and it supports neither Conversation Orchestrator nor Conversation Memory for voice.
+**VoiceS2SChannel**: Native speech-to-speech voice for CES. Bridges Twilio Media Streams audio to CES `BidiRunSession`, with CES doing its own STT/TTS. There are no discrete turns, so `process_webhook` is a no-op and `send_response` raises `NotImplementedError`, and it supports neither Conversation Orchestrator nor Conversation Memory for voice.
 
 ### Server
 
@@ -209,6 +209,7 @@ CI's `TAC Compat` matrix also runs lint, mypy and tests against the latest patch
 When a new `twilio-agent-connect` release is published to PyPI, bump every `twilio-agent-connect` constraint in `pyproject.toml` together (base dependency and each extra that pulls it), then re-lock and run all checks:
 
 ```bash
+uv lock --upgrade-package twilio-agent-connect
 make sync
 make check
 ```

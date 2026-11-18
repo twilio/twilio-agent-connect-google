@@ -20,14 +20,17 @@ import audioop
 import base64
 import json
 import traceback
+from datetime import datetime
 from typing import Any
 
 import google.auth
 from google.auth.transport.requests import Request as GoogleAuthRequest
 from tac.channels.base import BaseChannel
 from tac.channels.websocket_protocol import WebSocketDisconnectError, WebSocketProtocol
+from tac.core.analytics import track_event
 from tac.core.logging import get_logger
 from tac.core.tac import TAC
+from tac.models.session import ConversationSession
 from twilio.twiml.voice_response import VoiceResponse
 
 from tac_google.connectors.cx_agent_studio.voice_s2s.config import VoiceS2SConfig
@@ -83,6 +86,11 @@ class VoiceS2SChannel(BaseChannel):
     ) -> None:
         super().__init__(tac, memory_mode="never")
 
+        # Owned here rather than inherited: BaseChannel stopped providing session
+        # storage in the SDK (only VoiceChannel keeps it), and S2S has no
+        # Conversation Orchestrator behind it to report the lifecycle for us.
+        self._conversations: dict[str, ConversationSession] = {}
+
         if isinstance(config, dict):
             config = VoiceS2SConfig(**config)
         elif config is None:
@@ -107,6 +115,60 @@ class VoiceS2SChannel(BaseChannel):
 
     def get_channel_name(self) -> str:
         return "VOICE_S2S"
+
+    def _start_conversation(self, conv_id: str) -> ConversationSession:
+        """Track a new session for a call, or return the existing one."""
+        existing = self._conversations.get(conv_id)
+        if existing is not None:
+            return existing
+
+        session = ConversationSession(
+            conversation_id=conv_id,
+            call_sid=None,
+            profile_id=None,
+            channel=self.get_channel_name(),
+            profile=None,
+            author_info=None,
+            ai_agent_info=None,
+        )
+        self._conversations[conv_id] = session
+
+        logger.info("Started S2S voice conversation", conversation_id=conv_id)
+        track_event(
+            "Conversation Started",
+            self.tac.config.account_sid,
+            channel=self._telemetry_channel,
+            conversation_id=conv_id,
+            has_profile_id=False,
+        )
+        return session
+
+    async def _end_conversation(self, conv_id: str) -> None:
+        """Release a call's session and fire `on_conversation_ended`. Idempotent."""
+        session = self._conversations.pop(conv_id, None)
+        if session is None:
+            return
+
+        # Measured before the callback, which is application-owned and may be slow.
+        duration_ms = int((datetime.now() - session.started_at).total_seconds() * 1000)
+
+        try:
+            await self.tac.trigger_conversation_ended(session)
+        except Exception as e:
+            logger.error(
+                "Error in conversation ended callback",
+                conversation_id=conv_id,
+                error=str(e),
+                exc_info=True,
+            )
+
+        track_event(
+            "Conversation Ended",
+            self.tac.config.account_sid,
+            channel=self._telemetry_channel,
+            conversation_id=conv_id,
+            duration_ms=duration_ms,
+        )
 
     async def handle_incoming_call(self, websocket_url: str | None = None) -> str:
         """Generate TwiML that connects the call to Twilio Media Streams.

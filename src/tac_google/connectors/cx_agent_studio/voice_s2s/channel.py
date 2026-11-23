@@ -133,7 +133,10 @@ class VoiceS2SChannel(BaseChannel):
         )
         self._conversations[conv_id] = session
 
-        logger.info("Started S2S voice conversation", conversation_id=conv_id)
+        logger.info(
+            f"CONVERSATION | Started {self.get_channel_name()} conversation",
+            conversation_id=conv_id,
+        )
         track_event(
             "Conversation Started",
             self.tac.config.account_sid,
@@ -168,6 +171,12 @@ class VoiceS2SChannel(BaseChannel):
             channel=self._telemetry_channel,
             conversation_id=conv_id,
             duration_ms=duration_ms,
+        )
+
+        logger.debug(
+            "Ended conversation",
+            conversation_id=conv_id,
+            channel=self.get_channel_name(),
         )
 
     async def handle_incoming_call(self, websocket_url: str | None = None) -> str:

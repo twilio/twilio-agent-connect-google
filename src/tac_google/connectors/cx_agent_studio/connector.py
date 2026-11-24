@@ -7,6 +7,7 @@ from typing import Any
 
 import google.auth
 from google.auth.transport.requests import AuthorizedSession
+from tac import PartnerConnector
 from tac.adapters import MemoryPromptBuilder
 from tac.channels.chat import ChatChannelConfig
 from tac.channels.rcs import RCSChannelConfig
@@ -19,6 +20,7 @@ from tac.models.handoff import PendingHandoffData
 from tac.models.session import ConversationSession
 from tac.models.tac import TACMemoryResponse
 
+from tac_google._version import __version__
 from tac_google.connectors._channels import ConnectorChannels
 from tac_google.connectors._injected_memory import (
     is_memory_injected,
@@ -99,6 +101,7 @@ class CXAgentStudioConnector:
         chat_config: ChatChannelConfig | dict[str, Any] | None = None,
     ) -> None:
         self.tac = tac
+        self.tac.register_partner_connector(PartnerConnector.GOOGLE_CX_AGENT_STUDIO, __version__)
         self.agent_id = agent_id.rstrip("/")
         self._last_injected_memory = new_injected_memory_cache()
 

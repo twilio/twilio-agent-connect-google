@@ -6,6 +6,7 @@ import asyncio
 import json
 from typing import TYPE_CHECKING, Any
 
+from tac import PartnerConnector
 from tac.channels.chat import ChatChannelConfig
 from tac.channels.rcs import RCSChannelConfig
 from tac.channels.sms import SMSChannelConfig
@@ -15,6 +16,7 @@ from tac.core.tac import TAC
 from tac.models.session import ConversationSession
 from tac.models.tac import TACMemoryResponse
 
+from tac_google._version import __version__
 from tac_google.connectors.agent_platform._base import AgentEngineConnectorBase
 
 if TYPE_CHECKING:
@@ -110,6 +112,9 @@ class StudioAgentEngineConnector(AgentEngineConnectorBase):
             rcs_config=rcs_config,
             whatsapp_config=whatsapp_config,
             chat_config=chat_config,
+        )
+        self.tac.register_partner_connector(
+            PartnerConnector.GOOGLE_STUDIO_AGENT_ENGINE, __version__
         )
 
         base_url = self._agent_engine_base_url(agent)

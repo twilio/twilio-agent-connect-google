@@ -23,9 +23,9 @@ from tac.models.tac import TACMemoryResponse
 from tac_google._version import __version__
 from tac_google.connectors._channels import ConnectorChannels
 from tac_google.connectors._injected_memory import (
-    is_memory_injected,
+    is_voice,
     new_injected_memory_cache,
-    record_memory_injected,
+    was_injected,
 )
 from tac_google.connectors.cx_agent_studio.voice_s2s import VoiceS2SChannel, VoiceS2SConfig
 
@@ -54,8 +54,8 @@ class CXAgentStudioConnector:
 
     Conversation history is kept server-side by CES: the TAC conversation id
     doubles as the CES session id, so every turn lands in the same session
-    and no local history is built. Conversation Memory is injected only when it
-    changes turn-to-turn (see `_maybe_tag_memory`).
+    and no local history is built. Conversation Memory is tagged every messaging
+    turn, and on voice only when it changes (see `_maybe_tag_memory`).
 
     Every CX Agent Studio agent has an `end_session` tool attached by
     default, letting the model decide on its own when a call is done — see
@@ -151,13 +151,13 @@ class CXAgentStudioConnector:
     ) -> str | None:
         try:
             conv_id = context.conversation_id
-            message, memory_to_commit = await self._maybe_tag_memory(
+            message, memory_to_commit = self._maybe_tag_memory(
                 user_message, context, memory_response
             )
             session = f"{self.agent_id}/sessions/{conv_id}"
             reply = await self._run_session(session, message, context)
             if memory_to_commit is not None:
-                await self._record_injected_memory(context, memory_to_commit)
+                self._last_injected_memory[conv_id] = memory_to_commit
             return reply
 
         except Exception as e:
@@ -169,29 +169,34 @@ class CXAgentStudioConnector:
             )
             return "I encountered an error processing your message. Please try again."
 
-    async def _maybe_tag_memory(
+    def _maybe_tag_memory(
         self,
         user_message: str,
         context: ConversationSession,
         memory_response: TACMemoryResponse | None,
     ) -> tuple[str, str | None]:
-        """Prepends memory to the message only when its content has changed.
+        """Prepends memory every messaging turn; on voice, only when it has changed.
 
-        CES replays the full session history on every call, so memory it already
-        received (on any instance) is not prepended again.
+        CES replays the full session history on every call, so voice
+        (memory_mode="once") skips unchanged memory or it would be duplicated
+        each turn. Messaging is tagged every turn.
 
         Returns (message, memory_to_commit). memory_to_commit is None when
         nothing should change in self._last_injected_memory; otherwise the
         caller must commit it only after runSession succeeds, so a failed
         call doesn't silently mark memory as sent.
         """
+        conv_id = context.conversation_id
         if not memory_response:
             return user_message, None
 
         memory_context = MemoryPromptBuilder.build(memory_response, context)
-        if not memory_context or await is_memory_injected(
-            self._last_injected_memory, context, memory_context
-        ):
+        if not memory_context:
+            return user_message, None
+        if not is_voice(context):
+            # Messaging turns can land on any replica: tag every turn, track nothing.
+            return f"{memory_context}\n\n{user_message}", None
+        if was_injected(self._last_injected_memory, conv_id, memory_context):
             return user_message, None
 
         return f"{memory_context}\n\n{user_message}", memory_context
@@ -288,8 +293,3 @@ class CXAgentStudioConnector:
 
     def _handle_conversation_ended(self, context: ConversationSession) -> None:
         self._last_injected_memory.pop(context.conversation_id, None)
-
-    async def _record_injected_memory(
-        self, context: ConversationSession, memory_context: str
-    ) -> None:
-        await record_memory_injected(self._last_injected_memory, self.tac, context, memory_context)

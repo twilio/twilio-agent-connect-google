@@ -12,7 +12,6 @@ def make_bare_base() -> AgentEngineConnectorBase:
     """Builds an AgentEngineConnectorBase without the TAC/channel wiring in __init__."""
     base = AgentEngineConnectorBase.__new__(AgentEngineConnectorBase)
     base._last_injected_memory = {}
-    base.tac = Mock()
     base._agent_engine_http = Mock()
     return base
 
@@ -113,44 +112,37 @@ class TestMaybeTagMessage:
     def _context(self, conv_id: str = "conv-1") -> SimpleNamespace:
         return SimpleNamespace(conversation_id=conv_id, profile_id="user-1", channel="VOICE")
 
-    @pytest.mark.asyncio
-    async def test_no_memory_response_returns_message_unchanged(self):
+    def test_no_memory_response_returns_message_unchanged(self):
         base = make_bare_base()
-        message, memory_to_commit = await base._maybe_tag_message("hello", self._context(), None)
+        message, memory_to_commit = base._maybe_tag_message("hello", self._context(), None)
         assert message == "hello"
         assert memory_to_commit is None
 
-    @pytest.mark.asyncio
-    async def test_empty_memory_context_returns_message_unchanged(self):
+    def test_empty_memory_context_returns_message_unchanged(self):
         base = make_bare_base()
         with patch(
             "tac_google.connectors.agent_platform._base.MemoryPromptBuilder.build",
             return_value=None,
         ):
-            message, memory_to_commit = await base._maybe_tag_message(
-                "hello", self._context(), Mock()
-            )
+            message, memory_to_commit = base._maybe_tag_message("hello", self._context(), Mock())
         assert message == "hello"
         assert memory_to_commit is None
 
-    @pytest.mark.asyncio
-    async def test_first_turn_tags_memory(self):
+    def test_first_turn_tags_memory(self):
         base = make_bare_base()
         with patch(
             "tac_google.connectors.agent_platform._base.MemoryPromptBuilder.build",
             return_value="user likes pizza",
         ):
-            message, memory_to_commit = await base._maybe_tag_message(
-                "hello", self._context(), Mock()
-            )
+            message, memory_to_commit = base._maybe_tag_message("hello", self._context(), Mock())
         assert "user likes pizza" in message
         assert "hello" in message
         assert memory_to_commit == "user likes pizza"
 
-    @pytest.mark.asyncio
-    async def test_unchanged_memory_is_not_retagged(self):
-        """Unchanged memory must not be re-tagged, or ADK/Studio's session
-        replay accumulates a duplicate copy on every turn."""
+    def test_unchanged_memory_is_not_retagged(self):
+        """memory_mode="once" returns the same cached memory every turn — this
+        must not be re-tagged, or ADK/Studio's session replay accumulates a
+        duplicate copy on every turn."""
         base = make_bare_base()
         context = self._context()
         base._last_injected_memory[context.conversation_id] = "user likes pizza"
@@ -158,12 +150,11 @@ class TestMaybeTagMessage:
             "tac_google.connectors.agent_platform._base.MemoryPromptBuilder.build",
             return_value="user likes pizza",
         ):
-            message, memory_to_commit = await base._maybe_tag_message("turn 2", context, Mock())
+            message, memory_to_commit = base._maybe_tag_message("turn 2", context, Mock())
         assert message == "turn 2"
         assert memory_to_commit is None
 
-    @pytest.mark.asyncio
-    async def test_changed_memory_is_retagged(self):
+    def test_changed_memory_is_retagged(self):
         """memory_mode="always" re-queries per turn and typically returns
         different content — that must still get tagged every time."""
         base = make_bare_base()
@@ -173,13 +164,12 @@ class TestMaybeTagMessage:
             "tac_google.connectors.agent_platform._base.MemoryPromptBuilder.build",
             return_value="memory v2",
         ):
-            message, memory_to_commit = await base._maybe_tag_message("turn 2", context, Mock())
+            message, memory_to_commit = base._maybe_tag_message("turn 2", context, Mock())
         assert "memory v2" in message
         assert "turn 2" in message
         assert memory_to_commit == "memory v2"
 
-    @pytest.mark.asyncio
-    async def test_conversation_ended_clears_tracked_memory(self):
+    def test_conversation_ended_clears_tracked_memory(self):
         base = make_bare_base()
         context = self._context()
         base._last_injected_memory[context.conversation_id] = "user likes pizza"
@@ -190,7 +180,7 @@ class TestMaybeTagMessage:
         ):
             # After the conversation ends, the same memory content is tagged
             # again on a subsequent (new) conversation reusing the same content.
-            message, memory_to_commit = await base._maybe_tag_message("turn 2", context, Mock())
+            message, memory_to_commit = base._maybe_tag_message("turn 2", context, Mock())
         assert "user likes pizza" in message
         assert memory_to_commit == "user likes pizza"
 

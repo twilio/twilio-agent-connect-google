@@ -122,7 +122,7 @@ class ADKAgentEngineConnector(AgentEngineConnectorBase):
             await self._create_session(self._sessions_url, session_id, user_id)
             self.adk_sessions_created.add(conv_id)
 
-        user_message, memory_to_commit = await self._maybe_tag_message(
+        user_message, memory_to_commit = self._maybe_tag_message(
             user_message, context, memory_response
         )
 
@@ -139,7 +139,7 @@ class ADKAgentEngineConnector(AgentEngineConnectorBase):
             )
         ]
         if memory_to_commit is not None:
-            await self._record_injected_memory(context, memory_to_commit)
+            self._last_injected_memory[conv_id] = memory_to_commit
         return self._parse_event_stream_text(events)
 
     def _handle_conversation_ended(self, context: ConversationSession) -> None:

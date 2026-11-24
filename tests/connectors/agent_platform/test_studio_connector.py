@@ -15,7 +15,6 @@ def make_bare_connector(agent: Mock) -> StudioAgentEngineConnector:
     connector.agent = agent
     connector.studio_sessions_created = set()
     connector._last_injected_memory = {}
-    connector.tac = Mock()
     connector._agent_engine_http = Mock()
     connector._sessions_url = "https://example/sessions"
     connector._stream_query_url = "https://example:streamQuery"
@@ -90,7 +89,7 @@ class TestInvokeAgent:
     @pytest.mark.asyncio
     async def test_failed_call_does_not_commit_memory(self):
         """A failed streamQuery call must not mark memory as sent —
-        otherwise the next turn (same content)
+        otherwise the next turn (memory_mode="once", unchanged content)
         would skip re-sending memory Studio never actually received."""
         connector = make_bare_connector(Mock())
         response = Mock()

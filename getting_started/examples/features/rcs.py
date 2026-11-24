@@ -53,7 +53,7 @@ connector = ConversationalAgentsConnector(
     tac=tac,
     agent_id=CONVERSATIONAL_AGENT_ID,
     language_code=DIALOGFLOW_LANGUAGE_CODE,
-    rcs_config=RCSChannelConfig(memory_mode="once"),
+    rcs_config=RCSChannelConfig(memory_mode="always"),
 )
 
 server = TACFastAPIServer(

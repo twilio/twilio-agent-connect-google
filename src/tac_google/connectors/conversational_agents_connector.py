@@ -24,9 +24,9 @@ from tac.models.tac import TACMemoryResponse
 from tac_google._version import __version__
 from tac_google.connectors._channels import ConnectorChannels
 from tac_google.connectors._injected_memory import (
-    is_memory_injected,
+    is_voice,
     new_injected_memory_cache,
-    record_memory_injected,
+    was_injected,
 )
 
 logger = get_logger(__name__)
@@ -56,8 +56,8 @@ class ConversationalAgentsConnector:
     (default 30 min). This connector derives one stable session id per
     conversation (a UUID hash of the TAC conversation id, to fit Dialogflow's
     36-char session id limit) and reuses it on every turn, so Dialogflow keeps
-    the context (no local history is built). Conversation Memory is injected
-    only when it changes turn-to-turn (see `_maybe_tag_memory`).
+    the context (no local history is built). Conversation Memory is tagged every
+    messaging turn, and on voice only when it changes (see `_maybe_tag_memory`).
 
     Args:
         tac: TAC instance for channel integration.
@@ -158,13 +158,13 @@ class ConversationalAgentsConnector:
     ) -> str | None:
         try:
             conv_id = context.conversation_id
-            message, memory_to_commit = await self._maybe_tag_memory(
+            message, memory_to_commit = self._maybe_tag_memory(
                 user_message, context, memory_response
             )
             session = f"{self.agent_id}/sessions/{uuid.uuid5(_SESSION_NAMESPACE, conv_id)}"
             reply = await self._detect_intent(session, message)
             if memory_to_commit is not None:
-                await self._record_injected_memory(context, memory_to_commit)
+                self._last_injected_memory[conv_id] = memory_to_commit
             return reply
 
         except Exception as e:
@@ -176,17 +176,17 @@ class ConversationalAgentsConnector:
             )
             return "I encountered an error processing your message. Please try again."
 
-    async def _maybe_tag_memory(
+    def _maybe_tag_memory(
         self,
         user_message: str,
         context: ConversationSession,
         memory_response: TACMemoryResponse | None,
     ) -> tuple[str, str | None]:
-        """Prepends memory to the message only when its content has changed.
+        """Prepends memory every messaging turn; on voice, only when it has changed.
 
         Dialogflow CX replays the full session history on every call
-        (confirmed empirically), so memory it already received (on any
-        instance) is not prepended again.
+        (confirmed empirically), so voice (memory_mode="once") skips unchanged
+        memory or it would be duplicated each turn. Messaging is tagged every turn.
 
         Returns (message, memory_to_commit). memory_to_commit is None when
         nothing should change in self._last_injected_memory; otherwise the
@@ -194,13 +194,17 @@ class ConversationalAgentsConnector:
         eagerly would mark memory as sent even if the call fails, silently
         dropping it on retry.
         """
+        conv_id = context.conversation_id
         if not memory_response:
             return user_message, None
 
         memory_context = MemoryPromptBuilder.build(memory_response, context)
-        if not memory_context or await is_memory_injected(
-            self._last_injected_memory, context, memory_context
-        ):
+        if not memory_context:
+            return user_message, None
+        if not is_voice(context):
+            # Messaging turns can land on any replica: tag every turn, track nothing.
+            return f"{memory_context}\n\n{user_message}", None
+        if was_injected(self._last_injected_memory, conv_id, memory_context):
             return user_message, None
 
         return f"{memory_context}\n\n{user_message}", memory_context
@@ -241,8 +245,3 @@ class ConversationalAgentsConnector:
 
     def _handle_conversation_ended(self, context: ConversationSession) -> None:
         self._last_injected_memory.pop(context.conversation_id, None)
-
-    async def _record_injected_memory(
-        self, context: ConversationSession, memory_context: str
-    ) -> None:
-        await record_memory_injected(self._last_injected_memory, self.tac, context, memory_context)

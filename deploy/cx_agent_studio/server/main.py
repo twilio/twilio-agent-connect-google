@@ -36,13 +36,12 @@ CX_AGENT_ID = os.environ["CX_AGENT_ID"]
 
 tac = TAC(config=TACConfig.from_env())
 
-# memory_mode="once" on every channel: CES replays the whole session history
-# on each call, so re-injecting unchanged memory every turn would duplicate it.
+# Messaging recalls memory per message ("always"); voice recalls once per call ("once").
 MESSAGING_CONFIGS = {
-    "sms_config": SMSChannelConfig(memory_mode="once"),
-    "chat_config": ChatChannelConfig(memory_mode="once"),
-    "rcs_config": RCSChannelConfig(memory_mode="once"),
-    "whatsapp_config": WhatsAppChannelConfig(memory_mode="once"),
+    "sms_config": SMSChannelConfig(memory_mode="always"),
+    "chat_config": ChatChannelConfig(memory_mode="always"),
+    "rcs_config": RCSChannelConfig(memory_mode="always"),
+    "whatsapp_config": WhatsAppChannelConfig(memory_mode="always"),
 }
 
 # --- cascaded (default): ConversationRelay voice + messaging ----------------

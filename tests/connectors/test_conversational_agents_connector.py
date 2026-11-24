@@ -13,7 +13,6 @@ def make_bare_connector() -> ConversationalAgentsConnector:
     connector = ConversationalAgentsConnector.__new__(ConversationalAgentsConnector)
     connector.agent_id = "projects/p/locations/us-central1/agents/a"
     connector._last_injected_memory = {}
-    connector.tac = Mock()
     return connector
 
 
@@ -112,29 +111,25 @@ class TestChannelConstruction:
 
 
 class TestMaybeTagMemory:
-    @pytest.mark.asyncio
-    async def test_no_memory_response_returns_message_unchanged(self):
+    def test_no_memory_response_returns_message_unchanged(self):
         connector = make_bare_connector()
-        message, memory_to_commit = await connector._maybe_tag_memory("hello", make_context(), None)
+        message, memory_to_commit = connector._maybe_tag_memory("hello", make_context(), None)
         assert message == "hello"
         assert memory_to_commit is None
 
-    @pytest.mark.asyncio
-    async def test_first_turn_prepends_memory(self):
+    def test_first_turn_prepends_memory(self):
         connector = make_bare_connector()
         with patch(
             "tac_google.connectors.conversational_agents_connector.MemoryPromptBuilder.build",
             return_value="user likes pizza",
         ):
-            message, memory_to_commit = await connector._maybe_tag_memory(
-                "hello", make_context(), Mock()
-            )
+            message, memory_to_commit = connector._maybe_tag_memory("hello", make_context(), Mock())
         assert message == "user likes pizza\n\nhello"
         assert memory_to_commit == "user likes pizza"
 
-    @pytest.mark.asyncio
-    async def test_unchanged_memory_is_not_reprepended(self):
-        """Dialogflow CX keeps and replays full session history, so
+    def test_unchanged_memory_is_not_reprepended(self):
+        """memory_mode="once" returns the same cached memory every turn —
+        Dialogflow CX keeps and replays full session history, so
         re-prepending unchanged memory would duplicate it once per turn."""
         connector = make_bare_connector()
         context = make_context()
@@ -143,12 +138,11 @@ class TestMaybeTagMemory:
             "tac_google.connectors.conversational_agents_connector.MemoryPromptBuilder.build",
             return_value="user likes pizza",
         ):
-            message, memory_to_commit = await connector._maybe_tag_memory("turn 2", context, Mock())
+            message, memory_to_commit = connector._maybe_tag_memory("turn 2", context, Mock())
         assert message == "turn 2"
         assert memory_to_commit is None
 
-    @pytest.mark.asyncio
-    async def test_changed_memory_is_reprepended(self):
+    def test_changed_memory_is_reprepended(self):
         connector = make_bare_connector()
         context = make_context()
         connector._last_injected_memory[context.conversation_id] = "memory v1"
@@ -156,12 +150,11 @@ class TestMaybeTagMemory:
             "tac_google.connectors.conversational_agents_connector.MemoryPromptBuilder.build",
             return_value="memory v2",
         ):
-            message, memory_to_commit = await connector._maybe_tag_memory("turn 2", context, Mock())
+            message, memory_to_commit = connector._maybe_tag_memory("turn 2", context, Mock())
         assert message == "memory v2\n\nturn 2"
         assert memory_to_commit == "memory v2"
 
-    @pytest.mark.asyncio
-    async def test_conversation_ended_clears_tracked_memory(self):
+    def test_conversation_ended_clears_tracked_memory(self):
         connector = make_bare_connector()
         context = make_context()
         connector._last_injected_memory[context.conversation_id] = "user likes pizza"
@@ -170,7 +163,7 @@ class TestMaybeTagMemory:
             "tac_google.connectors.conversational_agents_connector.MemoryPromptBuilder.build",
             return_value="user likes pizza",
         ):
-            message, memory_to_commit = await connector._maybe_tag_memory("turn 2", context, Mock())
+            message, memory_to_commit = connector._maybe_tag_memory("turn 2", context, Mock())
         assert message == "user likes pizza\n\nturn 2"
         assert memory_to_commit == "user likes pizza"
 
@@ -194,7 +187,7 @@ class TestHandleMessageMemoryCommit:
     @pytest.mark.asyncio
     async def test_failed_call_does_not_commit_memory(self):
         """A failed detectIntent call must not mark memory as sent —
-        otherwise the next turn (same content)
+        otherwise the next turn (memory_mode="once", unchanged content)
         would skip re-sending memory that Dialogflow never received."""
         connector = make_bare_connector()
         context = make_context()

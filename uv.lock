@@ -430,7 +430,7 @@ name = "exceptiongroup"
 version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions" },
+    { name = "typing-extensions", marker = "python_full_version < '3.11'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/50/79/66800aadf48771f6b62f7eb014e352e5d06856655206165d775e675a02c9/exceptiongroup-1.3.1.tar.gz", hash = "sha256:8b412432c6055b0b7d14c310000ae93352ed6754f70fa8f7c34141f91c4e3219", size = 30371, upload-time = "2025-11-21T23:01:54.787Z" }
 wheels = [
@@ -1793,6 +1793,11 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/a3/5e/ecf12fdb62546d64385c158514e9b2b671f7832108ef2ecd2020ce0af2d1/pyjwt-2.13.0-py3-none-any.whl", hash = "sha256:66adcc2aff09b3f1bbd95fc1e1577df8ac8723c978552fd43304c8a290ac5728", size = 31274, upload-time = "2026-05-21T19:54:35.362Z" },
 ]
 
+[package.optional-dependencies]
+crypto = [
+    { name = "cryptography" },
+]
+
 [[package]]
 name = "pymdown-extensions"
 version = "11.0.2"
@@ -2042,6 +2047,20 @@ wheels = [
 ]
 
 [[package]]
+name = "segment-analytics-python"
+version = "2.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyjwt", extra = ["crypto"] },
+    { name = "python-dateutil" },
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/6c/e6/528c8b52eb7f2c35a4f240a06cdcdca0787b9667395cbef831a142230efb/segment_analytics_python-2.4.0.tar.gz", hash = "sha256:56184d755aa73415a59e113239f14ff0f98b3bd77b6bfea6c6034a87de561a38", size = 105138, upload-time = "2026-09-29T16:31:09.709Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0c/ea/b28606a3b5aace55a9bcba7c547fa74a209aae71f0807cfc8f8df4dfcc45/segment_analytics_python-2.4.0-py3-none-any.whl", hash = "sha256:0e809bb5555454ac229e52c86c9998b7f6919ffa11cc9cfa70867dd3b2ea87a7", size = 39304, upload-time = "2026-09-29T16:31:08.504Z" },
+]
+
+[[package]]
 name = "six"
 version = "1.17.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2116,16 +2135,17 @@ wheels = [
 
 [[package]]
 name = "twilio-agent-connect"
-version = "2.3.0"
+version = "2.6.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
     { name = "pydantic" },
+    { name = "segment-analytics-python" },
     { name = "twilio" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9e/fd/9cabd3513607bbaa393301019b6e695ac61f0274deb460f5ee8b2e0908ab/twilio_agent_connect-2.3.0.tar.gz", hash = "sha256:9600f63ab648ea890f89d7ec4c817334cd03ca172256b21e21c3c3cc74a64294", size = 105398, upload-time = "2026-08-18T20:21:05.874Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/bc/c6/60321277e238cb77381aaa4683b0fe63d5d0062112b418923aa0d3003870/twilio_agent_connect-2.6.0.tar.gz", hash = "sha256:4c423db7c0ab8278ae78360d4f08a09933e48a1362644c5143ac3f14967d11ba", size = 149472, upload-time = "2026-11-17T23:20:07.913Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a3/6e/1fd6fea89fde7bcc6ceb611e82b31e394cc3561cb9c9b94c17b765aacae8/twilio_agent_connect-2.3.0-py3-none-any.whl", hash = "sha256:b9d6fc96ca73fefa571dd39f6f7abb145a27bb07f3dcac536e3eb5baad1eb9a7", size = 132970, upload-time = "2026-08-18T20:21:04.651Z" },
+    { url = "https://files.pythonhosted.org/packages/ac/0c/ae9c3858c45e3b6caa63e8681d1f4244cd296ae0d8196deac03233548db1/twilio_agent_connect-2.6.0-py3-none-any.whl", hash = "sha256:f2d716370a62e880f3bca023fc7ceadd0e8be069057275545c44a845173b5680", size = 196210, upload-time = "2026-11-17T23:20:06.454Z" },
 ]
 
 [package.optional-dependencies]
@@ -2203,9 +2223,9 @@ requires-dist = [
     { name = "requests", marker = "extra == 'conversational-agents'", specifier = ">=2,<3" },
     { name = "requests", marker = "extra == 'cx-agent-studio'", specifier = ">=2,<3" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8.0,<1" },
-    { name = "twilio-agent-connect", specifier = ">=2.3.0,<3" },
-    { name = "twilio-agent-connect", extras = ["server"], marker = "extra == 'dev'", specifier = ">=2.3.0,<3" },
-    { name = "twilio-agent-connect", extras = ["server"], marker = "extra == 'server'", specifier = ">=2.3.0,<3" },
+    { name = "twilio-agent-connect", specifier = ">=2.6.0,<3" },
+    { name = "twilio-agent-connect", extras = ["server"], marker = "extra == 'dev'", specifier = ">=2.6.0,<3" },
+    { name = "twilio-agent-connect", extras = ["server"], marker = "extra == 'server'", specifier = ">=2.6.0,<3" },
     { name = "types-google-cloud-ndb", marker = "extra == 'dev'", specifier = ">=2.0.0" },
     { name = "websockets", marker = "extra == 'cx-agent-studio'", specifier = ">=14,<16" },
 ]

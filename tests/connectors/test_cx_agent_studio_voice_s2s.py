@@ -168,6 +168,49 @@ class TestNoOpChannelMethods:
             await channel.send_response("conv-1", "reply")
 
 
+class TestSessionLifecycle:
+    """The channel owns its session storage and reports the call lifecycle."""
+
+    def test_init_creates_empty_session_store(self):
+        with patch("google.auth.default", return_value=(Mock(), "p")):
+            channel = VoiceS2SChannel(
+                tac=SimpleNamespace(config=SimpleNamespace(account_sid="ACtest")),
+                agent_id="projects/p/locations/us/apps/a",
+            )
+
+        assert channel._conversations == {}
+
+    @pytest.mark.asyncio
+    async def test_reports_conversation_started_and_ended(self):
+        channel = make_bare_channel()
+        twilio_ws = FakeTwilioWebSocket(
+            [
+                {"event": "start", "start": {"callSid": "CA1", "streamSid": "MZ1"}},
+                {"event": "stop"},
+            ]
+        )
+        ces_ws = FakeCesWebSocket([{"endSession": {}}])
+
+        with (
+            patch("websockets.connect", AsyncMock(return_value=ces_ws)),
+            patch("tac_google.connectors.cx_agent_studio.voice_s2s.channel.track_event") as track,
+        ):
+            await channel.handle_websocket(twilio_ws)
+
+        started, ended = track.call_args_list
+        assert started.args == ("Conversation Started", "ACtest")
+        assert started.kwargs == {
+            "channel": "voice_s2s",
+            "conversation_id": "CA1",
+            "has_profile_id": False,
+        }
+        assert ended.args == ("Conversation Ended", "ACtest")
+        assert ended.kwargs["channel"] == "voice_s2s"
+        assert ended.kwargs["conversation_id"] == "CA1"
+        assert isinstance(ended.kwargs["duration_ms"], int)
+        assert channel._conversations == {}
+
+
 class TestHandleWebsocket:
     """Exercises the Twilio<->CES media bridge in `handle_websocket`."""
 

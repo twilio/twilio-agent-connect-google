@@ -79,7 +79,7 @@ docs/                                    # MkDocs sources for the published API 
 
 ```toml
 dependencies = [
-    "twilio-agent-connect>=2.3.0,<3",
+    "twilio-agent-connect>=2.6.0,<3",
 ]
 ```
 

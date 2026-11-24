@@ -131,7 +131,7 @@ class StudioAgentEngineConnector(AgentEngineConnectorBase):
             await self._create_session(self._sessions_url, session_id, user_id)
             self.studio_sessions_created.add(conv_id)
 
-        user_message, memory_to_commit = self._maybe_tag_message(
+        user_message, memory_to_commit = await self._maybe_tag_message(
             user_message, context, memory_response
         )
 
@@ -152,7 +152,7 @@ class StudioAgentEngineConnector(AgentEngineConnectorBase):
 
         events = await loop.run_in_executor(None, run_stream_query)
         if memory_to_commit is not None:
-            self._last_injected_memory[conv_id] = memory_to_commit
+            await self._record_injected_memory(context, memory_to_commit)
         return self._parse_event_stream_text(events)
 
     def _parse_studio_events(self, raw: str) -> list[dict[str, Any]]:

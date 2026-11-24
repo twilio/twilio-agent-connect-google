@@ -15,6 +15,7 @@ def make_bare_connector(agent: Mock) -> StudioAgentEngineConnector:
     connector.agent = agent
     connector.studio_sessions_created = set()
     connector._last_injected_memory = {}
+    connector.tac = Mock()
     connector._agent_engine_http = Mock()
     connector._sessions_url = "https://example/sessions"
     connector._stream_query_url = "https://example:streamQuery"
@@ -22,7 +23,7 @@ def make_bare_connector(agent: Mock) -> StudioAgentEngineConnector:
 
 
 def make_context(conv_id: str = "conv_1") -> SimpleNamespace:
-    return SimpleNamespace(conversation_id=conv_id, profile_id="user-1")
+    return SimpleNamespace(conversation_id=conv_id, profile_id="user-1", channel="VOICE")
 
 
 def stream_query_response(events: list[dict]) -> Mock:
@@ -89,7 +90,7 @@ class TestInvokeAgent:
     @pytest.mark.asyncio
     async def test_failed_call_does_not_commit_memory(self):
         """A failed streamQuery call must not mark memory as sent —
-        otherwise the next turn (memory_mode="once", unchanged content)
+        otherwise the next turn (same content)
         would skip re-sending memory Studio never actually received."""
         connector = make_bare_connector(Mock())
         response = Mock()

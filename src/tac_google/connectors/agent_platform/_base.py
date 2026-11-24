@@ -20,6 +20,11 @@ from tac.models.session import ConversationSession
 from tac.models.tac import TACMemoryResponse
 
 from tac_google.connectors._channels import ConnectorChannels
+from tac_google.connectors._injected_memory import (
+    is_memory_injected,
+    new_injected_memory_cache,
+    record_memory_injected,
+)
 
 if TYPE_CHECKING:
     from vertexai._genai.types.common import AgentEngine
@@ -70,7 +75,7 @@ class AgentEngineConnectorBase:
         self.whatsapp = channels.whatsapp
         self.chat = channels.chat
 
-        self._last_injected_memory: dict[str, str] = {}
+        self._last_injected_memory = new_injected_memory_cache()
         creds, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
         self._agent_engine_http = AuthorizedSession(creds)
 
@@ -105,7 +110,12 @@ class AgentEngineConnectorBase:
     def _handle_conversation_ended(self, context: ConversationSession) -> None:
         self._last_injected_memory.pop(context.conversation_id, None)
 
-    def _maybe_tag_message(
+    async def _record_injected_memory(
+        self, context: ConversationSession, memory_context: str
+    ) -> None:
+        await record_memory_injected(self._last_injected_memory, self.tac, context, memory_context)
+
+    async def _maybe_tag_message(
         self,
         user_message: str,
         context: ConversationSession,
@@ -114,11 +124,9 @@ class AgentEngineConnectorBase:
         """Injects memory only when it has changed since the last turn.
 
         ADK and Agent Studio persist every sent message in the session and
-        replay the full history on each call, so re-tagging unchanged memory
-        (memory_mode="once" returns the same cached memory every turn) would
-        duplicate it once per turn already in history. memory_mode="always"
-        re-queries per turn and typically returns different content, so it
-        keeps getting tagged.
+        replay the full history on each call, so memory they already received
+        (on any instance) is not tagged again, or it would be duplicated once per
+        turn already in history. Memory that changed since is tagged.
 
         Returns (message, memory_to_commit). memory_to_commit is None when
         nothing should change in self._last_injected_memory; otherwise the
@@ -126,12 +134,13 @@ class AgentEngineConnectorBase:
         committing eagerly would mark memory as sent even if the call fails,
         silently dropping it on retry.
         """
-        conv_id = context.conversation_id
         if not memory_response:
             return user_message, None
 
         memory_context = MemoryPromptBuilder.build(memory_response, context)
-        if not memory_context or self._last_injected_memory.get(conv_id) == memory_context:
+        if not memory_context or await is_memory_injected(
+            self._last_injected_memory, context, memory_context
+        ):
             return user_message, None
 
         return self._tag_message(user_message, memory_context), memory_context

@@ -48,6 +48,7 @@ src/tac_google/
 └── connectors/
     ├── __init__.py                      # Public exports for every connector
     ├── _channels.py                     # ConnectorChannels (SMS/Chat always, RCS/WhatsApp when configured)
+    ├── _injected_memory.py              # Tracks injected memory per conversation, across replicas
     ├── agent_platform/                  # Agents on GCP Agent Platform Runtime (Agent Engine)
     │   ├── _base.py                     # AgentEngineConnectorBase (channel wiring, session creation, errors)
     │   ├── adk_connector.py             # ADKAgentEngineConnector
@@ -79,7 +80,7 @@ docs/                                    # MkDocs sources for the published API 
 
 ```toml
 dependencies = [
-    "twilio-agent-connect>=2.3.0,<3",
+    "twilio-agent-connect>=2.6.0,<3",
 ]
 ```
 
@@ -104,7 +105,7 @@ Connectors combine agent runtime integration with channel management. Each one:
 
 **ConnectorChannels** (`connectors/_channels.py`): shared builder for SMS, Chat, RCS and WhatsApp. Voice is built by each connector itself because `CXAgentStudioConnector` has to choose between two voice channel types.
 
-**ADKAgentEngineConnector**: ADK agent on Agent Platform Runtime. Creates one session per conversation over REST (for a clean "already exists" signal) and calls `async_stream_query()` per message. Memory is wrapped in `<MEMORY>` ahead of the user text, which is wrapped in `<USER_MESSAGE>`, because the API has a single content channel. The session replays full history, so memory is injected only when it changes between turns (`_maybe_tag_message` in `_base.py`).
+**ADKAgentEngineConnector**: ADK agent on Agent Platform Runtime. Creates one session per conversation over REST (for a clean "already exists" signal) and calls `async_stream_query()` per message. Memory is wrapped in `<MEMORY>` ahead of the user text, which is wrapped in `<USER_MESSAGE>`, because the API has a single content channel. The session replays full history, so memory is injected only when it changes between turns (`_maybe_tag_message` in `_base.py`, backed by `_injected_memory.py`).
 
 **StudioAgentEngineConnector**: Agent Studio app on Agent Platform Runtime. Same session handling as the ADK connector, but invokes the `:streamQuery` REST endpoint directly since Studio apps have no SDK-bound query methods. Memory is injected the same way.
 
@@ -117,6 +118,12 @@ Connectors combine agent runtime integration with channel management. Each one:
 ### Server
 
 **CXAgentStudioFastAPIServer**: `TACFastAPIServer` plus the TwiML and WebSocket routes for S2S voice. Pass it a `VoiceChannel`, a `VoiceS2SChannel`, or `None`. Every other connector uses `tac.server.TACFastAPIServer` directly.
+
+### Running multiple instances
+
+Voice is pinned to one instance per call (its WebSocket), so per-call state can stay in process. Messaging turns can land on any instance, so a connector must not rely on in-process state between turns.
+
+The one piece of cross-turn state is which memory text was already injected (the agent replays history, so injecting it again duplicates it). `_injected_memory.py` keeps a local `tac.utils.expiring_dict.ExpiringDict` (24 h TTL, 10,000 entries) as a fast path and, for messaging, stores a SHA-256 of the injected memory under the `tac_google.memory_hash` key of the Conversation Orchestrator conversation metadata. This uses one of the conversation's 8 metadata keys. CLOSED reaches only one instance, so the others drop their entries by expiry. Reads and writes are best-effort: on failure memory is injected again, never dropped. Needs `twilio-agent-connect>=2.6.0` for `ConversationSession.conversation_metadata()`.
 
 ## Import Patterns
 

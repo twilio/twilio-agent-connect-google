@@ -14,13 +14,14 @@ def make_bare_connector(agent: Mock) -> ADKAgentEngineConnector:
     connector.agent = agent
     connector.adk_sessions_created = set()
     connector._last_injected_memory = {}
+    connector.tac = Mock()
     connector._agent_engine_http = Mock()
     connector._sessions_url = "https://example/sessions"
     return connector
 
 
 def make_context(conv_id: str = "conv_1") -> SimpleNamespace:
-    return SimpleNamespace(conversation_id=conv_id, profile_id="user-1")
+    return SimpleNamespace(conversation_id=conv_id, profile_id="user-1", channel="VOICE")
 
 
 async def async_events(events: list[dict]):
@@ -91,7 +92,7 @@ class TestInvokeAgent:
     @pytest.mark.asyncio
     async def test_failed_call_does_not_commit_memory(self):
         """A failed async_stream_query call must not mark memory as sent —
-        otherwise the next turn (memory_mode="once", unchanged content)
+        otherwise the next turn (same content)
         would skip re-sending memory ADK never actually received."""
         agent = Mock()
         agent.async_stream_query = Mock(side_effect=RuntimeError("boom"))

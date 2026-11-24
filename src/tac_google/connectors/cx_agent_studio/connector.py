@@ -20,6 +20,11 @@ from tac.models.session import ConversationSession
 from tac.models.tac import TACMemoryResponse
 
 from tac_google.connectors._channels import ConnectorChannels
+from tac_google.connectors._injected_memory import (
+    is_memory_injected,
+    new_injected_memory_cache,
+    record_memory_injected,
+)
 from tac_google.connectors.cx_agent_studio.voice_s2s import VoiceS2SChannel, VoiceS2SConfig
 
 logger = get_logger(__name__)
@@ -95,7 +100,7 @@ class CXAgentStudioConnector:
     ) -> None:
         self.tac = tac
         self.agent_id = agent_id.rstrip("/")
-        self._last_injected_memory: dict[str, str] = {}
+        self._last_injected_memory = new_injected_memory_cache()
 
         creds, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
         # Shared across calls for connection pooling. Not guarded against
@@ -143,13 +148,13 @@ class CXAgentStudioConnector:
     ) -> str | None:
         try:
             conv_id = context.conversation_id
-            message, memory_to_commit = self._maybe_tag_memory(
+            message, memory_to_commit = await self._maybe_tag_memory(
                 user_message, context, memory_response
             )
             session = f"{self.agent_id}/sessions/{conv_id}"
             reply = await self._run_session(session, message, context)
             if memory_to_commit is not None:
-                self._last_injected_memory[conv_id] = memory_to_commit
+                await self._record_injected_memory(context, memory_to_commit)
             return reply
 
         except Exception as e:
@@ -161,7 +166,7 @@ class CXAgentStudioConnector:
             )
             return "I encountered an error processing your message. Please try again."
 
-    def _maybe_tag_memory(
+    async def _maybe_tag_memory(
         self,
         user_message: str,
         context: ConversationSession,
@@ -169,20 +174,21 @@ class CXAgentStudioConnector:
     ) -> tuple[str, str | None]:
         """Prepends memory to the message only when its content has changed.
 
-        CES replays the full session history on every call, so re-prepending
-        unchanged memory (memory_mode="once") would duplicate it each turn.
+        CES replays the full session history on every call, so memory it already
+        received (on any instance) is not prepended again.
 
         Returns (message, memory_to_commit). memory_to_commit is None when
         nothing should change in self._last_injected_memory; otherwise the
         caller must commit it only after runSession succeeds, so a failed
         call doesn't silently mark memory as sent.
         """
-        conv_id = context.conversation_id
         if not memory_response:
             return user_message, None
 
         memory_context = MemoryPromptBuilder.build(memory_response, context)
-        if not memory_context or self._last_injected_memory.get(conv_id) == memory_context:
+        if not memory_context or await is_memory_injected(
+            self._last_injected_memory, context, memory_context
+        ):
             return user_message, None
 
         return f"{memory_context}\n\n{user_message}", memory_context
@@ -279,3 +285,8 @@ class CXAgentStudioConnector:
 
     def _handle_conversation_ended(self, context: ConversationSession) -> None:
         self._last_injected_memory.pop(context.conversation_id, None)
+
+    async def _record_injected_memory(
+        self, context: ConversationSession, memory_context: str
+    ) -> None:
+        await record_memory_injected(self._last_injected_memory, self.tac, context, memory_context)

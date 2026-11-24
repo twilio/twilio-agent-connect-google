@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from tac import PartnerConnector
 from tac.channels.chat import ChatChannelConfig
 from tac.channels.rcs import RCSChannelConfig
 from tac.channels.sms import SMSChannelConfig
@@ -13,6 +14,7 @@ from tac.core.tac import TAC
 from tac.models.session import ConversationSession
 from tac.models.tac import TACMemoryResponse
 
+from tac_google._version import __version__
 from tac_google.connectors.agent_platform._base import AgentEngineConnectorBase
 
 if TYPE_CHECKING:
@@ -103,6 +105,7 @@ class ADKAgentEngineConnector(AgentEngineConnectorBase):
             whatsapp_config=whatsapp_config,
             chat_config=chat_config,
         )
+        self.tac.register_partner_connector(PartnerConnector.GOOGLE_ADK_AGENT_ENGINE, __version__)
         self._sessions_url = f"{self._agent_engine_base_url(agent)}/sessions"
 
     async def _invoke_agent(

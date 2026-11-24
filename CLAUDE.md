@@ -100,6 +100,7 @@ Connectors combine agent runtime integration with channel management. Each one:
 - Builds the channel set: SMS and Chat always; RCS and WhatsApp only when `TWILIO_RCS_SENDER_ID` / `TWILIO_WHATSAPP_NUMBER` is configured. Their `*_config` args are tuning only and never enable a channel.
 - Exposes channels as attributes (`voice`, `sms`, `chat`, and `rcs` / `whatsapp`, which are `None` when not configured). Filter out `None` before handing channels to a server.
 - Registers with TAC via `on_message_ready()` and `on_conversation_ended()`.
+- Calls `tac.register_partner_connector(PartnerConnector.GOOGLE_*, __version__)` in `__init__`, so every outbound Twilio request carries a `tac-google/<version> (<ConnectorName>)` User-Agent token. A new connector needs its own `PartnerConnector` entry, which ships in a `twilio-agent-connect` release.
 - Injects Conversation Memory into the message sent to the agent.
 
 **ConnectorChannels** (`connectors/_channels.py`): shared builder for SMS, Chat, RCS and WhatsApp. Voice is built by each connector itself because `CXAgentStudioConnector` has to choose between two voice channel types.

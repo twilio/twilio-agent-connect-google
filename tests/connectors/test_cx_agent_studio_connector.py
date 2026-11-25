@@ -17,7 +17,9 @@ def make_bare_connector() -> CXAgentStudioConnector:
 
 
 def make_context(conv_id: str = "conv-1") -> SimpleNamespace:
-    return SimpleNamespace(conversation_id=conv_id, profile_id="user-1", pending_handoff_data=None)
+    return SimpleNamespace(
+        conversation_id=conv_id, profile_id="user-1", channel="VOICE", pending_handoff_data=None
+    )
 
 
 def make_tac_for_channels() -> Mock:

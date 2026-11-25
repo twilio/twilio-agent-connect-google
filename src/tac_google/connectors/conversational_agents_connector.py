@@ -23,6 +23,11 @@ from tac.models.tac import TACMemoryResponse
 
 from tac_google._version import __version__
 from tac_google.connectors._channels import ConnectorChannels
+from tac_google.connectors._injected_memory import (
+    is_voice,
+    new_injected_memory_cache,
+    was_injected,
+)
 
 logger = get_logger(__name__)
 
@@ -51,8 +56,8 @@ class ConversationalAgentsConnector:
     (default 30 min). This connector derives one stable session id per
     conversation (a UUID hash of the TAC conversation id, to fit Dialogflow's
     36-char session id limit) and reuses it on every turn, so Dialogflow keeps
-    the context (no local history is built). Conversation Memory is injected
-    only when it changes turn-to-turn (see `_maybe_tag_memory`).
+    the context (no local history is built). Conversation Memory is tagged every
+    messaging turn, and on voice only when it changes (see `_maybe_tag_memory`).
 
     Args:
         tac: TAC instance for channel integration.
@@ -105,7 +110,7 @@ class ConversationalAgentsConnector:
             )
         self._project = parts[1]
         location = parts[3]
-        self._last_injected_memory: dict[str, str] = {}
+        self._last_injected_memory = new_injected_memory_cache()
         self.language_code = language_code
         host = (
             "dialogflow.googleapis.com"
@@ -177,11 +182,11 @@ class ConversationalAgentsConnector:
         context: ConversationSession,
         memory_response: TACMemoryResponse | None,
     ) -> tuple[str, str | None]:
-        """Prepends memory to the message only when its content has changed.
+        """Prepends memory every messaging turn; on voice, only when it has changed.
 
         Dialogflow CX replays the full session history on every call
-        (confirmed empirically), so re-prepending unchanged memory
-        (memory_mode="once") would duplicate it each turn.
+        (confirmed empirically), so voice (memory_mode="once") skips unchanged
+        memory or it would be duplicated each turn. Messaging is tagged every turn.
 
         Returns (message, memory_to_commit). memory_to_commit is None when
         nothing should change in self._last_injected_memory; otherwise the
@@ -194,7 +199,12 @@ class ConversationalAgentsConnector:
             return user_message, None
 
         memory_context = MemoryPromptBuilder.build(memory_response, context)
-        if not memory_context or self._last_injected_memory.get(conv_id) == memory_context:
+        if not memory_context:
+            return user_message, None
+        if not is_voice(context):
+            # Messaging turns can land on any replica: tag every turn, track nothing.
+            return f"{memory_context}\n\n{user_message}", None
+        if was_injected(self._last_injected_memory, conv_id, memory_context):
             return user_message, None
 
         return f"{memory_context}\n\n{user_message}", memory_context

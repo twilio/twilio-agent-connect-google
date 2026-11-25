@@ -16,8 +16,8 @@ def make_bare_connector() -> ConversationalAgentsConnector:
     return connector
 
 
-def make_context(conv_id: str = "conv-1") -> SimpleNamespace:
-    return SimpleNamespace(conversation_id=conv_id, profile_id="user-1")
+def make_context(conv_id: str = "conv-1", channel: str = "VOICE") -> SimpleNamespace:
+    return SimpleNamespace(conversation_id=conv_id, profile_id="user-1", channel=channel)
 
 
 def make_tac_for_channels() -> Mock:
@@ -202,3 +202,31 @@ class TestHandleMessageMemoryCommit:
         ):
             await connector._handle_message("hello", context, Mock())
         assert context.conversation_id not in connector._last_injected_memory
+
+
+class TestMessagingAcrossReplicas:
+    @pytest.mark.asyncio
+    async def test_memory_is_tagged_every_turn_and_nothing_is_committed(self):
+        """Messaging turns can land on any replica, so memory goes out every turn and the
+        per-replica dict stays untouched."""
+        sent: list[str] = []
+
+        async def detect_intent(session: str, message: str) -> str:
+            sent.append(message)
+            return "reply"
+
+        replicas = [make_bare_connector(), make_bare_connector()]
+        context = make_context(channel="SMS")
+
+        build = "tac_google.connectors.conversational_agents_connector.MemoryPromptBuilder.build"
+        for turn in range(4):
+            replica = replicas[turn % 2]
+            with (
+                patch.object(replica, "_detect_intent", new=detect_intent),
+                patch(build, return_value="user likes pizza"),
+            ):
+                await replica._handle_message(f"turn {turn}", context, Mock())
+
+        assert len(sent) == 4
+        assert all("user likes pizza" in message for message in sent)
+        assert all(len(replica._last_injected_memory) == 0 for replica in replicas)

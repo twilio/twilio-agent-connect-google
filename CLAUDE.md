@@ -48,6 +48,7 @@ src/tac_google/
 └── connectors/
     ├── __init__.py                      # Public exports for every connector
     ├── _channels.py                     # ConnectorChannels (SMS/Chat always, RCS/WhatsApp when configured)
+    ├── _injected_memory.py              # Voice-only record of memory already injected
     ├── agent_platform/                  # Agents on GCP Agent Platform Runtime (Agent Engine)
     │   ├── _base.py                     # AgentEngineConnectorBase (channel wiring, session creation, errors)
     │   ├── adk_connector.py             # ADKAgentEngineConnector
@@ -105,19 +106,25 @@ Connectors combine agent runtime integration with channel management. Each one:
 
 **ConnectorChannels** (`connectors/_channels.py`): shared builder for SMS, Chat, RCS and WhatsApp. Voice is built by each connector itself because `CXAgentStudioConnector` has to choose between two voice channel types.
 
-**ADKAgentEngineConnector**: ADK agent on Agent Platform Runtime. Creates one session per conversation over REST (for a clean "already exists" signal) and calls `async_stream_query()` per message. Memory is wrapped in `<MEMORY>` ahead of the user text, which is wrapped in `<USER_MESSAGE>`, because the API has a single content channel. The session replays full history, so memory is injected only when it changes between turns (`_maybe_tag_message` in `_base.py`).
+**ADKAgentEngineConnector**: ADK agent on Agent Platform Runtime. Creates one session per conversation over REST (for a clean "already exists" signal) and calls `async_stream_query()` per message. Memory is wrapped in `<MEMORY>` ahead of the user text, which is wrapped in `<USER_MESSAGE>`, because the API has a single content channel. The session replays full history, so on voice memory is injected only when it changes between turns, while messaging tags it every turn (`_maybe_tag_message` in `_base.py`, backed by `_injected_memory.py`).
 
 **StudioAgentEngineConnector**: Agent Studio app on Agent Platform Runtime. Same session handling as the ADK connector, but invokes the `:streamQuery` REST endpoint directly since Studio apps have no SDK-bound query methods. Memory is injected the same way.
 
-**CXAgentStudioConnector**: CX Agent Studio (CES) agents over the text `runSession` REST API. The TAC conversation id doubles as the CES session id, so CES keeps history and no local history is built. Memory is prepended only when it changes between turns (`_maybe_tag_memory`) because CES replays full history. `voice_config` type picks the voice channel: a `VoiceChannelConfig` builds `voice_cascaded` (ConversationRelay), a `VoiceS2SConfig` builds `voice_s2s`, and `voice` is whichever was built. CES's `end_session` tool is handled in `_handle_end_session`.
+**CXAgentStudioConnector**: CX Agent Studio (CES) agents over the text `runSession` REST API. The TAC conversation id doubles as the CES session id, so CES keeps history and no local history is built. Memory is prepended every messaging turn, and on voice only when it changes (`_maybe_tag_memory`), because CES replays full history. `voice_config` type picks the voice channel: a `VoiceChannelConfig` builds `voice_cascaded` (ConversationRelay), a `VoiceS2SConfig` builds `voice_s2s`, and `voice` is whichever was built. CES's `end_session` tool is handled in `_handle_end_session`.
 
-**ConversationalAgentsConnector**: Dialogflow CX agents (Playbook or Flow) over the `detectIntent` v3 REST API. Derives one stable session id per conversation (a UUID hash of the TAC conversation id, to fit Dialogflow's 36-character limit). Memory is injected only when it changes, like the CES connector.
+**ConversationalAgentsConnector**: Dialogflow CX agents (Playbook or Flow) over the `detectIntent` v3 REST API. Derives one stable session id per conversation (a UUID hash of the TAC conversation id, to fit Dialogflow's 36-character limit). Memory is tagged like the CES connector.
 
 **VoiceS2SChannel**: Native speech-to-speech voice for CES. Bridges Twilio Media Streams audio to CES `BidiRunSession`, with CES doing its own STT/TTS. There are no discrete turns, so `process_webhook` is a no-op and `send_response` raises `NotImplementedError`, and it supports neither Conversation Orchestrator nor Conversation Memory for voice.
 
 ### Server
 
 **CXAgentStudioFastAPIServer**: `TACFastAPIServer` plus the TwiML and WebSocket routes for S2S voice. Pass it a `VoiceChannel`, a `VoiceS2SChannel`, or `None`. Every other connector uses `tac.server.TACFastAPIServer` directly.
+
+### Running multiple instances
+
+Voice is pinned to one instance per call (its WebSocket), so per-call state can stay in process. Messaging turns can land on any instance, so a connector must not rely on in-process state between turns.
+
+The one piece of cross-turn state is which memory text was already injected on voice (the agent replays history, so injecting it again duplicates it). `_injected_memory.py` keeps it in a local `tac.utils.expiring_dict.ExpiringDict` (24 h TTL, 10,000 entries), which is safe because voice is pinned to one instance. Messaging never touches it: memory is tagged every turn, as in the AWS and Microsoft connectors. The tradeoff is that unchanged memory accumulates in the replayed session history, which is accepted, as in those connectors. Messaging channels should use `memory_mode="always"`, since `"once"` is deprecated there and runs as `"always"` anyway.
 
 ## Import Patterns
 

@@ -20,6 +20,11 @@ from tac.models.session import ConversationSession
 from tac.models.tac import TACMemoryResponse
 
 from tac_google.connectors._channels import ConnectorChannels
+from tac_google.connectors._injected_memory import (
+    is_voice,
+    new_injected_memory_cache,
+    was_injected,
+)
 
 if TYPE_CHECKING:
     from vertexai._genai.types.common import AgentEngine
@@ -70,7 +75,7 @@ class AgentEngineConnectorBase:
         self.whatsapp = channels.whatsapp
         self.chat = channels.chat
 
-        self._last_injected_memory: dict[str, str] = {}
+        self._last_injected_memory = new_injected_memory_cache()
         creds, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
         self._agent_engine_http = AuthorizedSession(creds)
 
@@ -111,14 +116,13 @@ class AgentEngineConnectorBase:
         context: ConversationSession,
         memory_response: TACMemoryResponse | None,
     ) -> tuple[str, str | None]:
-        """Injects memory only when it has changed since the last turn.
+        """Tags memory every messaging turn; on voice, only when it has changed.
 
         ADK and Agent Studio persist every sent message in the session and
-        replay the full history on each call, so re-tagging unchanged memory
-        (memory_mode="once" returns the same cached memory every turn) would
-        duplicate it once per turn already in history. memory_mode="always"
-        re-queries per turn and typically returns different content, so it
-        keeps getting tagged.
+        replay the full history on each call, so voice (memory_mode="once" returns
+        the same cached memory every turn) skips unchanged memory or it would be
+        duplicated once per turn. Messaging is stateless across replicas and
+        re-queries memory per turn, so it is tagged every turn and never tracked.
 
         Returns (message, memory_to_commit). memory_to_commit is None when
         nothing should change in self._last_injected_memory; otherwise the
@@ -131,7 +135,12 @@ class AgentEngineConnectorBase:
             return user_message, None
 
         memory_context = MemoryPromptBuilder.build(memory_response, context)
-        if not memory_context or self._last_injected_memory.get(conv_id) == memory_context:
+        if not memory_context:
+            return user_message, None
+        if not is_voice(context):
+            # Messaging turns can land on any replica: tag every turn, track nothing.
+            return self._tag_message(user_message, memory_context), None
+        if was_injected(self._last_injected_memory, conv_id, memory_context):
             return user_message, None
 
         return self._tag_message(user_message, memory_context), memory_context

@@ -57,7 +57,7 @@ connector = ConversationalAgentsConnector(
     tac=tac,
     agent_id=CONVERSATIONAL_AGENT_ID,
     language_code=DIALOGFLOW_LANGUAGE_CODE,
-    chat_config=ChatChannelConfig(memory_mode="once"),
+    chat_config=ChatChannelConfig(memory_mode="always"),
 )
 
 if __name__ == "__main__":

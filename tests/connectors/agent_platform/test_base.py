@@ -110,7 +110,7 @@ class TestTagMessage:
 
 class TestMaybeTagMessage:
     def _context(self, conv_id: str = "conv-1") -> SimpleNamespace:
-        return SimpleNamespace(conversation_id=conv_id, profile_id="user-1")
+        return SimpleNamespace(conversation_id=conv_id, profile_id="user-1", channel="VOICE")
 
     def test_no_memory_response_returns_message_unchanged(self):
         base = make_bare_base()

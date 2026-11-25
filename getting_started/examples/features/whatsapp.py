@@ -54,7 +54,7 @@ connector = ConversationalAgentsConnector(
     tac=tac,
     agent_id=CONVERSATIONAL_AGENT_ID,
     language_code=DIALOGFLOW_LANGUAGE_CODE,
-    whatsapp_config=WhatsAppChannelConfig(memory_mode="once"),
+    whatsapp_config=WhatsAppChannelConfig(memory_mode="always"),
 )
 
 server = TACFastAPIServer(

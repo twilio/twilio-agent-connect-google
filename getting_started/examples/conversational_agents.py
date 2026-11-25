@@ -58,7 +58,7 @@ connector = ConversationalAgentsConnector(
     agent_id=CONVERSATIONAL_AGENT_ID,
     language_code=DIALOGFLOW_LANGUAGE_CODE,
     voice_config=VoiceChannelConfig(memory_mode="once"),
-    sms_config=SMSChannelConfig(memory_mode="once"),
+    sms_config=SMSChannelConfig(memory_mode="always"),
 )
 
 server = TACFastAPIServer(

@@ -32,7 +32,7 @@ connector = ADKAgentEngineConnector(
     tac=tac,
     agent=agent,
     voice_config=VoiceChannelConfig(memory_mode="once"),
-    sms_config=SMSChannelConfig(memory_mode="once"),
+    sms_config=SMSChannelConfig(memory_mode="always"),
 )
 
 server = TACFastAPIServer(

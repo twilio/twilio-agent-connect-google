@@ -52,7 +52,7 @@ connector = CXAgentStudioConnector(
     tac=tac,
     agent_id=CX_AGENT_ID,
     voice_config=VoiceChannelConfig(memory_mode="once"),
-    sms_config=SMSChannelConfig(memory_mode="once"),
+    sms_config=SMSChannelConfig(memory_mode="always"),
 )
 
 server = CXAgentStudioFastAPIServer(

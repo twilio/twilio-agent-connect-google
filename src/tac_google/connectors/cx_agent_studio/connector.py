@@ -22,6 +22,11 @@ from tac.models.tac import TACMemoryResponse
 
 from tac_google._version import __version__
 from tac_google.connectors._channels import ConnectorChannels
+from tac_google.connectors._injected_memory import (
+    is_voice,
+    new_injected_memory_cache,
+    was_injected,
+)
 from tac_google.connectors.cx_agent_studio.voice_s2s import VoiceS2SChannel, VoiceS2SConfig
 
 logger = get_logger(__name__)
@@ -49,8 +54,8 @@ class CXAgentStudioConnector:
 
     Conversation history is kept server-side by CES: the TAC conversation id
     doubles as the CES session id, so every turn lands in the same session
-    and no local history is built. Conversation Memory is injected only when it
-    changes turn-to-turn (see `_maybe_tag_memory`).
+    and no local history is built. Conversation Memory is tagged every messaging
+    turn, and on voice only when it changes (see `_maybe_tag_memory`).
 
     Every CX Agent Studio agent has an `end_session` tool attached by
     default, letting the model decide on its own when a call is done — see
@@ -98,7 +103,7 @@ class CXAgentStudioConnector:
         self.tac = tac
         self.tac.register_partner_connector(PartnerConnector.GOOGLE_CX_AGENT_STUDIO, __version__)
         self.agent_id = agent_id.rstrip("/")
-        self._last_injected_memory: dict[str, str] = {}
+        self._last_injected_memory = new_injected_memory_cache()
 
         creds, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
         # Shared across calls for connection pooling. Not guarded against
@@ -170,10 +175,11 @@ class CXAgentStudioConnector:
         context: ConversationSession,
         memory_response: TACMemoryResponse | None,
     ) -> tuple[str, str | None]:
-        """Prepends memory to the message only when its content has changed.
+        """Prepends memory every messaging turn; on voice, only when it has changed.
 
-        CES replays the full session history on every call, so re-prepending
-        unchanged memory (memory_mode="once") would duplicate it each turn.
+        CES replays the full session history on every call, so voice
+        (memory_mode="once") skips unchanged memory or it would be duplicated
+        each turn. Messaging is tagged every turn.
 
         Returns (message, memory_to_commit). memory_to_commit is None when
         nothing should change in self._last_injected_memory; otherwise the
@@ -185,7 +191,12 @@ class CXAgentStudioConnector:
             return user_message, None
 
         memory_context = MemoryPromptBuilder.build(memory_response, context)
-        if not memory_context or self._last_injected_memory.get(conv_id) == memory_context:
+        if not memory_context:
+            return user_message, None
+        if not is_voice(context):
+            # Messaging turns can land on any replica: tag every turn, track nothing.
+            return f"{memory_context}\n\n{user_message}", None
+        if was_injected(self._last_injected_memory, conv_id, memory_context):
             return user_message, None
 
         return f"{memory_context}\n\n{user_message}", memory_context

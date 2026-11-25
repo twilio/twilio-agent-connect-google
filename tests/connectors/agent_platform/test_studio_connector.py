@@ -21,8 +21,8 @@ def make_bare_connector(agent: Mock) -> StudioAgentEngineConnector:
     return connector
 
 
-def make_context(conv_id: str = "conv_1") -> SimpleNamespace:
-    return SimpleNamespace(conversation_id=conv_id, profile_id="user-1", channel="VOICE")
+def make_context(conv_id: str = "conv_1", channel: str = "VOICE") -> SimpleNamespace:
+    return SimpleNamespace(conversation_id=conv_id, profile_id="user-1", channel=channel)
 
 
 def stream_query_response(events: list[dict]) -> Mock:
@@ -137,3 +137,35 @@ class TestHandleConversationEnded:
 
         assert context.conversation_id not in connector.studio_sessions_created
         assert context.conversation_id not in connector._last_injected_memory
+
+
+class TestMessagingAcrossReplicas:
+    @pytest.mark.asyncio
+    async def test_memory_is_tagged_every_turn_and_nothing_is_committed(self):
+        """Messaging turns can land on any replica, so memory goes out every turn and the
+        per-replica dict stays untouched."""
+        sent: list[str] = []
+
+        def capture(*args, **kwargs):
+            sent.append(kwargs["json"]["input"]["message"])
+            return stream_query_response([{"content": {"parts": [{"text": "reply"}]}}])
+
+        replicas = []
+        for _ in range(2):
+            replica = make_bare_connector(Mock())
+            replica._agent_engine_http.post.side_effect = capture
+            replicas.append(replica)
+        context = make_context(channel="SMS")
+
+        build = "tac_google.connectors.agent_platform._base.MemoryPromptBuilder.build"
+        for turn in range(4):
+            replica = replicas[turn % 2]
+            with (
+                patch.object(replica, "_create_session", new=AsyncMock()),
+                patch(build, return_value="likes pizza"),
+            ):
+                await replica._invoke_agent(f"turn {turn}", context, Mock())
+
+        assert len(sent) == 4
+        assert all("likes pizza" in message for message in sent)
+        assert all(len(replica._last_injected_memory) == 0 for replica in replicas)

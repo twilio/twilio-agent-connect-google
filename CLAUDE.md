@@ -124,7 +124,7 @@ Connectors combine agent runtime integration with channel management. Each one:
 
 Voice is pinned to one instance per call (its WebSocket), so per-call state can stay in process. Messaging turns can land on any instance, so a connector must not rely on in-process state between turns.
 
-The one piece of cross-turn state is which memory text was already injected on voice (the agent replays history, so injecting it again duplicates it). `_injected_memory.py` keeps it in a local `tac.utils.expiring_dict.ExpiringDict` (24 h TTL, 10,000 entries), which is safe because voice is pinned to one instance. Messaging never touches it: memory is tagged every turn, as in the AWS and Microsoft connectors. Messaging channels should use `memory_mode="always"`, since `"once"` is deprecated there and runs as `"always"` anyway.
+The one piece of cross-turn state is which memory text was already injected on voice (the agent replays history, so injecting it again duplicates it). `_injected_memory.py` keeps it in a local `tac.utils.expiring_dict.ExpiringDict` (24 h TTL, 10,000 entries), which is safe because voice is pinned to one instance. Messaging never touches it: memory is tagged every turn, as in the AWS and Microsoft connectors. The tradeoff is that unchanged memory accumulates in the replayed session history, which is accepted, as in those connectors. Messaging channels should use `memory_mode="always"`, since `"once"` is deprecated there and runs as `"always"` anyway.
 
 ## Import Patterns
 

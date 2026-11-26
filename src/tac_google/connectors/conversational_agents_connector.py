@@ -9,6 +9,7 @@ from typing import Any
 import google.auth
 import google.oauth2.credentials
 from google.auth.transport.requests import AuthorizedSession
+from tac import PartnerConnector
 from tac.adapters import MemoryPromptBuilder
 from tac.channels.chat import ChatChannelConfig
 from tac.channels.rcs import RCSChannelConfig
@@ -20,6 +21,7 @@ from tac.core.tac import TAC
 from tac.models.session import ConversationSession
 from tac.models.tac import TACMemoryResponse
 
+from tac_google._version import __version__
 from tac_google.connectors._channels import ConnectorChannels
 
 logger = get_logger(__name__)
@@ -85,6 +87,9 @@ class ConversationalAgentsConnector:
         chat_config: ChatChannelConfig | dict[str, Any] | None = None,
     ) -> None:
         self.tac = tac
+        self.tac.register_partner_connector(
+            PartnerConnector.GOOGLE_CONVERSATIONAL_AGENTS, __version__
+        )
         self.agent_id = agent_id.rstrip("/")
         parts = self.agent_id.split("/")
         if (

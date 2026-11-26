@@ -23,7 +23,11 @@ _TIMEOUT_S = 30
 
 
 def dialogflow_host(location: str) -> str:
-    return "dialogflow.googleapis.com" if location == "global" else f"{location}-dialogflow.googleapis.com"
+    return (
+        "dialogflow.googleapis.com"
+        if location == "global"
+        else f"{location}-dialogflow.googleapis.com"
+    )
 
 
 def extract_text(data: dict) -> str:

@@ -49,7 +49,9 @@ def main():
         print("\n❌ Error: GOOGLE_CLOUD_LOCATION not set")
         return
     if not agent_id:
-        print("\n❌ Error: GCP_REASONING_ENGINE_ID not set — build and deploy an agent in Agent Studio first (see README.md)")
+        print(
+            "\n❌ Error: GCP_REASONING_ENGINE_ID not set — build and deploy an agent in Agent Studio first (see README.md)"
+        )
         return
 
     creds, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
